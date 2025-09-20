@@ -4,6 +4,7 @@ import {
   createQuiz,
   createQuestion,
   getQuizzes,
+  getQuestions,
 } from "../controller/quizController";
 import { authMiddleware } from "../middleware/auth";
 import { upload } from "../middleware/upload";
@@ -11,15 +12,19 @@ import { upload } from "../middleware/upload";
 const router = Router();
 
 // Admin only
-router.post(
-  "/create-question",
-  authMiddleware(["admin"]),
-  upload.single("media"),
-  createQuestion
-);
-router.post("/create-quiz", authMiddleware(["admin"]), createQuiz);
+// router.post(
+//   "/create-question",
+//   authMiddleware(["admin"]),
+//   upload.single("media"),
+//   createQuestion
+// );
+
+router.post("/create-question", createQuestion);
+// router.post("/create-quiz", authMiddleware(["admin"]), createQuiz);
+router.post("/create-quiz", createQuiz);
 
 // Public
 router.get("/all", getQuizzes);
+router.get("/questions", getQuestions);
 
 export default router;
