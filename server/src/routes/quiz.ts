@@ -1,11 +1,25 @@
-import express from "express";
-import { createQuestion, createQuiz, getQuizzes } from "../controller/quizController";
-import { authMiddleware, adminMiddleware } from "../middleware/auth";
+// routes/quiz.ts
+import { Router } from "express";
+import {
+  createQuiz,
+  createQuestion,
+  getQuizzes,
+} from "../controller/quizController";
+import { authMiddleware } from "../middleware/auth";
+import { upload } from "../middleware/upload";
 
-const router = express.Router();
+const router = Router();
 
-router.post("/question", authMiddleware, adminMiddleware, createQuestion);
-router.post("/", authMiddleware, adminMiddleware, createQuiz);
-router.get("/", getQuizzes);
+// Admin only
+router.post(
+  "/create-question",
+  authMiddleware(["admin"]),
+  upload.single("media"),
+  createQuestion
+);
+router.post("/create-quiz", authMiddleware(["admin"]), createQuiz);
+
+// Public
+router.get("/all", getQuizzes);
 
 export default router;
