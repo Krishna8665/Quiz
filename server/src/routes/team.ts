@@ -3,14 +3,16 @@ import {
   addTeam,
   getTeams,
   deleteTeam,
-  updatePoints,
+  addPoints,
+  reducePoints,
 } from "../controller/teamController";
 
 const router = Router();
 
-router.post("/teams", addTeam);
-router.get("/teams", getTeams);
-router.delete("/teams/:id", deleteTeam);
-router.put("/teams/:id/points", updatePoints);
+router.post("/teams", addTeam); // add team
+router.get("/teams", getTeams); // fetch all teams
+router.delete("/teams/:id", deleteTeam); // delete team
+router.patch("/teams/:id/add", addPoints); // increase points
+router.patch("/teams/:id/reduce", reducePoints); // reduce points (negative marking)
 
 export default router;
