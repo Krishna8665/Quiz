@@ -1,38 +1,53 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
-export default function TeamGrid() {
-  const [teams, setTeams] = useState([]);
+export default function RoundGrid() {
   const navigate = useNavigate();
-  const API_URL = "http://localhost:3000/api/team/teams";
+  const [points, setPoints] = useState({
+    "General Round": 0,
+    "Buzzer Round": 0,
+    "Rapid Fire Round": 0,
+    "Estimation Round": 0,
+    "Subject Round": 0,
+  });
 
+  // Optional: fetch points from backend
   useEffect(() => {
-    const fetchTeams = async () => {
+    const fetchPoints = async () => {
       try {
-        const res = await axios.get(API_URL);
-        setTeams(res.data); // assuming each team has {_id, name, points}
+        const res = await axios.get("http://localhost:3000/api/round/points");
+        // res.data should be { "General Round": 10, ... }
+        setPoints(res.data);
       } catch (err) {
-        console.error("Failed to fetch teams:", err);
+        console.error("Failed to fetch points:", err);
       }
     };
-    fetchTeams();
+    fetchPoints();
   }, []);
+
+  const rounds = [
+    "General Round",
+    "Buzzer Round",
+    "Rapid Fire Round",
+    "Estimation Round",
+    "Subject Round",
+  ];
 
   return (
     <div
       style={{
-        maxWidth: 800,
+        maxWidth: 900,
         margin: "50px auto",
         display: "grid",
         gridTemplateColumns: "repeat(2, 1fr)",
         gap: 16,
       }}
     >
-      {teams.map((team) => (
+      {rounds.map((round) => (
         <div
-          key={team._id}
-          onClick={() => navigate(`/category`)}
+          key={round}
+          onClick={() => navigate(`/quiz`)}
           style={{
             cursor: "pointer",
             padding: 20,
@@ -51,8 +66,8 @@ export default function TeamGrid() {
             e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.1)";
           }}
         >
-          <h3 style={{ margin: "0 0 8px" }}>{team.name}</h3>
-          <p style={{ margin: 0, color: "#555" }}>Points: {team.points || 0}</p>
+          <h3 style={{ margin: "0 0 8px" }}>{round}</h3>
+          <p style={{ margin: 0, color: "#555" }}>Points: {points[round]}</p>
         </div>
       ))}
     </div>

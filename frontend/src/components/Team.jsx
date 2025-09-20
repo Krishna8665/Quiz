@@ -120,7 +120,7 @@ export default function TeamManager() {
       </ul>
 
       <button
-        onClick={() => navigate("/quiz")}
+        onClick={() => navigate("/team-list")}
         style={{
           marginTop: 16,
           padding: "10px 16px",
