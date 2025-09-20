@@ -11,13 +11,19 @@ export default function AdminLayout() {
   ];
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "Arial, sans-serif" }}>
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        fontFamily: "Arial, sans-serif",
+      }}
+    >
       {/* Sidebar */}
       <div
         style={{
-          width: 200,
+          width: 220,
           background: "#1f2937",
-          color: "#fff",
+          color: "#a12b2bff",
           display: "flex",
           flexDirection: "column",
           padding: "20px 0",
@@ -35,6 +41,7 @@ export default function AdminLayout() {
               background: isActive ? "#fff" : "transparent",
               margin: "0 10px 10px 10px",
               borderRadius: 6,
+              fontWeight: "bold",
             })}
           >
             {item.name}
@@ -43,8 +50,26 @@ export default function AdminLayout() {
       </div>
 
       {/* Main Content */}
-      <div style={{ flex: 1, padding: 20, background: "#f3f4f6" }}>
-        <Outlet />
+      <div
+        style={{
+          flex: 1,
+          padding: "40px 60px", // more padding
+          background: "#3059adff",
+          minHeight: "100vh",
+          maxWidth: "calc(100% - 220px)", // ensure full width minus sidebar
+        }}
+      >
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: "12px",
+            padding: "30px",
+            minHeight: "80vh", // makes the content box bigger
+            boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+          }}
+        >
+          <Outlet />
+        </div>
       </div>
     </div>
   );
