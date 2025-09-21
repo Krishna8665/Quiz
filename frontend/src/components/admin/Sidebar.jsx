@@ -4,10 +4,10 @@ import { NavLink, Outlet } from "react-router-dom";
 export default function AdminLayout() {
   const menuItems = [
     { name: "Dashboard", path: "/admin/dashboard" },
-    { name: "Teams", path: "/admin/teams" },
+    { name: "Teams", path: "/admin/teams" }, // ✅ keep consistent with routes
     { name: "Questions", path: "/admin/questions" },
     { name: "Rounds", path: "/admin/rounds" },
-    { name: "Settings", path: "/admin/settings" },
+    { name: "Create Quiz-Master", path: "/admin/create" },
   ];
 
   return (
@@ -23,10 +23,14 @@ export default function AdminLayout() {
         style={{
           width: 220,
           background: "#1f2937",
-          color: "#a12b2bff",
+          color: "#fff",
           display: "flex",
           flexDirection: "column",
           padding: "20px 0",
+          position: "fixed",
+          top: 0,
+          bottom: 0,
+          left: 0,
         }}
       >
         <h2 style={{ textAlign: "center", marginBottom: 30 }}>Admin</h2>
@@ -42,6 +46,7 @@ export default function AdminLayout() {
               margin: "0 10px 10px 10px",
               borderRadius: 6,
               fontWeight: "bold",
+              display: "block",
             })}
           >
             {item.name}
@@ -53,10 +58,11 @@ export default function AdminLayout() {
       <div
         style={{
           flex: 1,
-          padding: "40px 60px", // more padding
-          background: "#3059adff",
+          padding: "40px 60px",
+          background: "#3059ad",
           minHeight: "100vh",
-          maxWidth: "calc(100% - 220px)", // ensure full width minus sidebar
+          marginLeft: 220, // push content after sidebar
+          transition: "margin-left 0.3s ease",
         }}
       >
         <div
@@ -64,7 +70,7 @@ export default function AdminLayout() {
             background: "#fff",
             borderRadius: "12px",
             padding: "30px",
-            minHeight: "80vh", // makes the content box bigger
+            minHeight: "80vh",
             boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
           }}
         >

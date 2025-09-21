@@ -8,6 +8,9 @@ import RoundGrid from "./components/Category";
 import AdminLayout from "./components/admin/Sidebar";
 import Dashboard from "./pages/admin/Dashboard";
 import Questions from "./pages/admin/Questions";
+import Teams from "./pages/admin/Team";
+import Rounds from "./pages/admin/Rounds";
+import Create from "./pages/admin/Create";
 function App() {
   return (
     <>
@@ -18,18 +21,16 @@ function App() {
         <Route path="/team-list" element={<TeamGrid />} />
         <Route path="/category" element={<RoundGrid />} />
       </Routes>
-      <Routes>
-        {/* Admin Layout */}
+     <Routes>
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />{" "}
-          {/* Default page when /admin */}
           <Route path="dashboard" element={<Dashboard />} />
-          {/* <Route path="teams" element={<Teams />} /> */}
+          <Route path="teams" element={<Teams />} />
           <Route path="questions" element={<Questions />} />
-          {/* <Route path="rounds" element={<Rounds />} />
-          <Route path="settings" element={<Settings />} /> */}
+          <Route path="rounds" element={<Rounds />} />
+          <Route path="create" element={<Create />} />
         </Route>
       </Routes>
+      
     </>
   );
 }

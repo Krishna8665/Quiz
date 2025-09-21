@@ -6,10 +6,10 @@ const questionSchema = new mongoose.Schema({
   options: [{ type: String }], // multiple-choice options
   correctAnswer: { type: String, required: true },
   points: { type: Number, default: 0 },
-   category: { 
-    type: String, 
-    enum: ["Physics", "Maths", "Chemistry", "Biology", "Zoology", "Botany"], 
-    required: true 
+  category: {
+    type: String,
+    enum: ["Physics", "Maths", "Chemistry", "Biology", "Zoology", "Botany"],
+    required: true,
   },
   media: {
     type: {
@@ -18,7 +18,7 @@ const questionSchema = new mongoose.Schema({
       default: null,
     },
     url: { type: String, default: null }, // path to uploaded file
-  }
+  },
 });
 
 export default mongoose.model("Question", questionSchema);
