@@ -4,7 +4,7 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 export interface ITeam extends Document {
   name: string;
   points: number;
-  adminId: Types.ObjectId | string; // can be populated 
+  adminId: Types.ObjectId | string; // can be populated as string
 }
 
 const TeamSchema: Schema<ITeam> = new Schema(
