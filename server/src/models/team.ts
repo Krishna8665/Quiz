@@ -9,7 +9,7 @@ export interface ITeam extends Document {
 
 const TeamSchema: Schema<ITeam> = new Schema(
   {
-    name: { type: String, required: true },
+    name: { type: String, required: true,unique: true },
     points: { type: Number, default: 0 },
     adminId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
