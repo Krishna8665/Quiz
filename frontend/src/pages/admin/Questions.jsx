@@ -19,6 +19,8 @@ export default function QuestionForm() {
   });
   const [message, setMessage] = useState("");
 
+  const API_URL = "http://localhost:3000/api/quiz";
+
   // Handle generic input
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -75,13 +77,12 @@ export default function QuestionForm() {
         return;
       }
 
-      await axios.post(
-        "http://localhost:3000/api/quiz/create-question",
-        payload
-      );
-      setMessage("✅ Question added successfully!");
+      const token = localStorage.getItem("token");
+      await axios.post(`${API_URL}/create-question`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      
+      setMessage("✅ Question added successfully!");
       setFormData({
         text: "",
         type: "multiple-choice",
@@ -126,7 +127,9 @@ export default function QuestionForm() {
         fontFamily: "Arial, sans-serif",
       }}
     >
-      <h2 style={{ textAlign: "center", marginBottom: 20, color: "black"}}>Add Question</h2>
+      <h2 style={{ textAlign: "center", marginBottom: 20, color: "black" }}>
+        Add Question
+      </h2>
       {message && (
         <p style={{ color: message.includes("❌") ? "red" : "green" }}>
           {message}
@@ -137,6 +140,7 @@ export default function QuestionForm() {
         onSubmit={handleSubmit}
         style={{ display: "flex", flexDirection: "column", gap: 15 }}
       >
+        {/* Question text */}
         <textarea
           name="text"
           value={formData.text}
@@ -152,6 +156,7 @@ export default function QuestionForm() {
           }}
         />
 
+        {/* Type */}
         <select
           value={formData.type}
           onChange={handleTypeChange}
@@ -165,6 +170,7 @@ export default function QuestionForm() {
           <option value="short-answer">Short Answer</option>
         </select>
 
+        {/* Options */}
         {formData.options.map((opt, idx) => (
           <input
             key={opt.id}
@@ -182,6 +188,7 @@ export default function QuestionForm() {
           />
         ))}
 
+        {/* Correct Answer */}
         {formData.type === "multiple-choice" && (
           <select
             value={formData.correctAnswer}
@@ -223,6 +230,7 @@ export default function QuestionForm() {
           />
         )}
 
+        {/* Points */}
         <input
           type="number"
           name="points"
@@ -238,6 +246,7 @@ export default function QuestionForm() {
           }}
         />
 
+        {/* Category */}
         <select
           name="category"
           value={formData.category}
@@ -258,6 +267,7 @@ export default function QuestionForm() {
           ))}
         </select>
 
+        {/* Media URL */}
         <input
           type="text"
           name="media.url"
@@ -277,6 +287,7 @@ export default function QuestionForm() {
           }}
         />
 
+        {/* Media Type */}
         <select
           name="media.type"
           value={formData.media.type}
