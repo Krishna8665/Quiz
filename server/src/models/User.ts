@@ -17,7 +17,7 @@ const userSchema = new Schema<IUser, IUserModel>(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["admin", "user"], default: "admin" },
+    role: { type: String, enum: ["admin", "user"], default: "user" },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
