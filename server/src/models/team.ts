@@ -1,13 +1,19 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
+// Use Types.ObjectId for adminId
 export interface ITeam extends Document {
   name: string;
   points: number;
+  adminId: Types.ObjectId | string; // can be populated as string
 }
 
-const TeamSchema: Schema = new Schema({
-  name: { type: String, required: true },
-  points: { type: Number, default: 0 },
-});
+const TeamSchema: Schema<ITeam> = new Schema(
+  {
+    name: { type: String, required: true },
+    points: { type: Number, default: 0 },
+    adminId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  },
+  { timestamps: true }
+);
 
 export default mongoose.model<ITeam>("Team", TeamSchema);

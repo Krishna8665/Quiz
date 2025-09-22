@@ -6,13 +6,14 @@ import {
   addPoints,
   reducePoints,
 } from "../controller/teamController";
+import { authMiddleware } from "../middleware/auth";
 
 const router = Router();
 
-router.post("/teams", addTeam); // add team
+router.post("/teams", authMiddleware(["admin"]), addTeam); // add team
 router.get("/teams", getTeams); // fetch all teams
-router.delete("/teams/:id", deleteTeam); // delete team
-router.patch("/teams/:id/add", addPoints); // increase points
-router.patch("/teams/:id/reduce", reducePoints); // reduce points (negative marking)
+router.delete("/teams/:id", authMiddleware(["admin"]), deleteTeam);
+router.patch("/teams/:id/add", authMiddleware(["admin"]), addPoints);
+router.patch("/teams/:id/reduce", authMiddleware(["admin"]), reducePoints);
 
 export default router;

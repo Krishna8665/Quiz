@@ -1,3 +1,4 @@
+// import "express";
 // import * as multer from "multer";
 
 // declare global {
@@ -15,4 +16,5 @@
 //   }
 // }
 
-// export {}; // 👈 this is required
+// // This export is important to make this a module
+// export {};

@@ -1,24 +1,42 @@
-// controllers/quizController.ts
 import { Request, Response } from "express";
 import Quiz from "../models/quiz";
 import Question from "../models/question";
 
-// Create Question with optional media
+// 👇 Define a local type for this file
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    role?: string;
+    email?: string;
+  };
+  file?: Express.Multer.File;
+  files?: Express.Multer.File[];
+}
 
-export const createQuestion = async (req: Request, res: Response) => {
+export const createQuestion = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
   try {
+    const user = req.user;
+    const file = req.file;
+
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const adminId = user.id;
     const { text, options, correctAnswer, points, category, media } = req.body;
 
-    // If file is uploaded, override media
     let finalMedia = media || null;
-    if (req.file) {
+    if (file) {
       finalMedia = {
-        type: req.file.mimetype.startsWith("image")
+        type: file.mimetype.startsWith("image")
           ? "image"
-          : req.file.mimetype.startsWith("video")
+          : file.mimetype.startsWith("video")
           ? "video"
-          : "file",
-        url: `/uploads/${req.file.filename}`,
+          : "unknown",
+        url: `/uploads/${file.filename}`,
       };
     }
 
@@ -29,23 +47,24 @@ export const createQuestion = async (req: Request, res: Response) => {
       points,
       category,
       media: finalMedia,
+      adminId,
     });
 
     await question.save();
-    res.json(question);
+    return res.json(question);
   } catch (err) {
-    res.status(500).json({ message: "Error creating question", error: err });
+    console.error("Error creating question:", err);
+    return res.status(500).json({
+      message: "Error creating question",
+      error: err instanceof Error ? err.message : "Unknown error",
+    });
   }
 };
-
-
 
 // Create Quiz with rounds
 export const createQuiz = async (req: Request, res: Response) => {
   try {
     const { title, rounds } = req.body;
-    // rounds = [{ name: "Round 1", questions: [questionId1, questionId2] }]
-
     const quiz = new Quiz({ title, rounds });
     await quiz.save();
 
@@ -71,9 +90,10 @@ export const getQuizzes = async (req: Request, res: Response) => {
   }
 };
 
-export const getQuestions = async (req: Request, res: Response) => {
+export const getQuestions = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const questions = await Question.find().lean();
+    const adminId = req.user?.id;
+    const questions = await Question.find({ adminId }).lean();
 
     if (!questions || questions.length === 0) {
       return res.status(404).json({ message: "No questions found" });

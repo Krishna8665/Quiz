@@ -1,39 +1,41 @@
 {
   "compilerOptions": {
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "strictPropertyInitialization": false,
-
-    // File layout
-    "rootDir": "./src",
-    "outDir": "./dist",
-
-    // JS Environment
     "target": "ES2020",
     "module": "commonjs",
     "moduleResolution": "node",
     "esModuleInterop": true,
     "resolveJsonModule": true,
 
-    // Type Safety
+    "rootDir": "./src",
+    "outDir": "./dist",
+
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "forceConsistentCasingInFileNames": true,
 
-    // Output
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
 
-    // Libraries & types
-    "types": ["node"],
-    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "baseUrl": "./src",
+    "paths": {
+      "*": ["*"],
+      "controllers/*": ["controllers/*"],
+      "models/*": ["models/*"],
+      "routes/*": ["routes/*"],
+      "middleware/*": ["middleware/*"],
+      "types/*": ["types/*"]
+    },
 
-    // Misc
+    "types": ["node", "express", "multer"],
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+
     "skipLibCheck": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./.tsbuildinfo"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
+  "exclude": ["node_modules", "dist"]
 }

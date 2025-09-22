@@ -1,24 +1,47 @@
 // models/Question.ts
-import mongoose from "mongoose";
+import mongoose, { Schema, Document, Model } from "mongoose";
 
-const questionSchema = new mongoose.Schema({
-  text: { type: String, required: true },
-  options: [{ type: String }], // multiple-choice options
-  correctAnswer: { type: String, required: true },
-  points: { type: Number, default: 0 },
-  category: {
-    type: String,
-    enum: ["Physics", "Maths", "Chemistry", "Biology", "Zoology", "Botany"],
-    required: true,
-  },
-  media: {
-    type: {
-      type: String, // "image" | "video" | "file"
-      enum: ["image", "video", "file", null],
-      default: null,
+export interface IQuestion extends Document {
+  text: string;
+  options: string[];
+  correctAnswer: string;
+  points: number;
+  category:
+    | "Physics"
+    | "Maths"
+    | "Chemistry"
+    | "Biology"
+    | "Zoology"
+    | "Botany";
+  media?: {
+    type: "image" | "video" | "file" | null;
+    url: string | null;
+  };
+  adminId: mongoose.Types.ObjectId;
+}
+
+const questionSchema = new Schema<IQuestion>(
+  {
+    text: { type: String, required: true },
+    options: [{ type: String }], // multiple-choice options
+    correctAnswer: { type: String, required: true },
+    points: { type: Number, default: 0 },
+    category: {
+      type: String,
+      enum: ["Physics", "Maths", "Chemistry", "Biology", "Zoology", "Botany"],
+      required: true,
     },
-    url: { type: String, default: null }, // path to uploaded file
+    media: {
+      type: {
+        type: String,
+        enum: ["image", "video", "file", null],
+        default: null,
+      },
+      url: { type: String, default: null },
+    },
+    adminId: { type: Schema.Types.ObjectId, ref: "User" },
   },
-});
+  { timestamps: true }
+);
 
-export default mongoose.model("Question", questionSchema);
+export default mongoose.model<IQuestion>("Question", questionSchema);

@@ -1,4 +1,3 @@
-// routes/quiz.ts
 import { Router } from "express";
 import {
   createQuiz,
@@ -7,24 +6,27 @@ import {
   getQuestions,
 } from "../controller/quizController";
 import { authMiddleware } from "../middleware/auth";
-import { upload } from "../middleware/upload";
+import multer from "multer";
+
+// Setup multer for file uploads if needed
+const upload = multer({ dest: "uploads/" });
 
 const router = Router();
 
-// Admin only
-// router.post(
-//   "/create-question",
-//   authMiddleware(["admin"]),
-//   upload.single("media"),
-//   createQuestion
-// );
+// Admin only routes
+router.post(
+  "/create-question",
+  authMiddleware(["admin"]),
+  upload.single("media"), // optional media upload
+  (req, res, next) => createQuestion(req as any, res).catch(next)
+);
 
-router.post("/create-question", createQuestion);
-// router.post("/create-quiz", authMiddleware(["admin"]), createQuiz);
-router.post("/create-quiz", createQuiz);
+router.post("/create-quiz", authMiddleware(["admin"]), createQuiz);
 
-// Public
+// Public routes
 router.get("/all", getQuizzes);
-router.get("/questions", getQuestions);
+router.get("/questions", authMiddleware(["admin"]), (req, res, next) =>
+  getQuestions(req as any, res).catch(next)
+);
 
 export default router;
