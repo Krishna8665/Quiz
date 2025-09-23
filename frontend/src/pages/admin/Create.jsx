@@ -30,16 +30,17 @@ export default function AdminCreateUser() {
         }
       );
 
-      alert(`User created: ${res.data.user.name}`);
+      alert(`User created: ${res.data.user?.name || "Unknown"}`);
       setFormData({ name: "", email: "", password: "", role: "user" });
     } catch (err) {
+      console.error(err);
       alert(err.response?.data?.message || "Failed to create user");
     }
   };
 
   return (
     <div style={{ maxWidth: 400, margin: "0 auto", padding: 20 }}>
-      <h2>Create User (Admin)</h2>
+      <h2 style={{ color: "black" }}>Create Quiz-Master</h2>
       <form
         onSubmit={handleSubmit}
         style={{ display: "flex", flexDirection: "column", gap: 10 }}
@@ -68,10 +69,15 @@ export default function AdminCreateUser() {
           placeholder="Password"
           required
         />
-        {/* <select name="role" value={formData.role} onChange={handleChange}>
+
+        {/*  if admin to choose role */}
+        {/* 
+        <select name="role" value={formData.role} onChange={handleChange}>
           <option value="user">User</option>
           <option value="admin">Admin</option>
-        </select> */}
+        </select>
+        */}
+
         <button type="submit">Create User</button>
       </form>
     </div>

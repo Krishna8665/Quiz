@@ -20,10 +20,10 @@ export const register = async (req: AuthRequest, res: Response) => {
     const user = new User({ name, email, password: hashed, role, createdBy });
     await user.save();
 
-    res.status(201).json({
-      message: "User registered",
-      user,
-    });
+    // remove password before sending
+    const userObj = user.toJSON();
+
+    res.status(201).json({ message: "User registered", user: userObj });
   } catch (err) {
     res.status(500).json({ message: "Registration failed", error: err });
   }
