@@ -1,11 +1,12 @@
 import { useState } from "react";
 import axios from "axios";
 
-export default function Create() {
+export default function AdminCreateUser() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
+    role: "user",
   });
 
   const handleChange = (e) => {
@@ -17,27 +18,28 @@ export default function Create() {
     e.preventDefault();
 
     try {
+      const token = localStorage.getItem("token"); // admin token stored on login
+
       const res = await axios.post(
-        "http://localhost:3000/api/auth/register",
-        formData
+        "http://localhost:3000/api/auth/admin/register",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-      // Success alert
-      alert(res.data.message || "Registration successful!");
-
-      // Reset form
-      setFormData({ name: "", email: "", password: "" });
+      alert(`User created: ${res.data.user.name}`);
+      setFormData({ name: "", email: "", password: "", role: "user" });
     } catch (err) {
-      console.error(err);
-
-      // Error alert
-      alert(err.response?.data?.message || "Registration failed");
+      alert(err.response?.data?.message || "Failed to create user");
     }
   };
 
   return (
     <div style={{ maxWidth: 400, margin: "0 auto", padding: 20 }}>
-      <h2>Register</h2>
+      <h2>Create User (Admin)</h2>
       <form
         onSubmit={handleSubmit}
         style={{ display: "flex", flexDirection: "column", gap: 10 }}
@@ -66,7 +68,11 @@ export default function Create() {
           placeholder="Password"
           required
         />
-        <button type="submit">Register</button>
+        {/* <select name="role" value={formData.role} onChange={handleChange}>
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select> */}
+        <button type="submit">Create User</button>
       </form>
     </div>
   );

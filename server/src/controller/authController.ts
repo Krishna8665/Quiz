@@ -3,13 +3,27 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User";
 
-export const register = async (req: Request, res: Response) => {
+// Extend request to include user (from authMiddleware)
+interface AuthRequest extends Request {
+  user?: {
+    id: string;
+    role: string;
+  };
+}
+
+export const register = async (req: AuthRequest, res: Response) => {
   try {
     const { name, email, password, role } = req.body;
     const hashed = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashed, role });
+    // if logged-in admin is creating user, set createdBy
+    const createdBy = req.user?.role === "admin" ? req.user.id : undefined;
+    const user = new User({ name, email, password: hashed, role, createdBy });
     await user.save();
-    res.json({ message: "User registered" });
+
+    res.status(201).json({
+      message: "User registered",
+      user,
+    });
   } catch (err) {
     res.status(500).json({ message: "Registration failed", error: err });
   }

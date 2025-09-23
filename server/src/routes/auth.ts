@@ -4,7 +4,13 @@ import { authMiddleware } from "../middleware/auth";
 
 const router = express.Router();
 
+//  normal self-registration (anyone can register as user)
 router.post("/register", register);
-router.post("/login",login);
+
+//  admin-only registration (sets createdBy = adminId)
+router.post("/admin/register", authMiddleware(["admin"]), register);
+
+//  login
+router.post("/login", login);
 
 export default router;
