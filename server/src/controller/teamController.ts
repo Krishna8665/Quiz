@@ -84,7 +84,8 @@ export const addPoints = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: "Points added", team });
   } catch (err) {
-    res.status(500).json({ message: "Failed to add points", error: err });
+    res.status(500).json({ message: "Failed to add points" });
+    console.error(err);
   }
 };
 
