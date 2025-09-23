@@ -33,7 +33,7 @@ export const createQuestion = async (
       finalMedia = {
         type: file.mimetype.startsWith("image")
           ? "image"
-          : file.mimetype.startsWith("vid")
+          : file.mimetype.startsWith("video")
           ? "video"
           : "unknown",
         url: `/uploads/${file.filename}`,
