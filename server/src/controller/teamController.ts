@@ -10,7 +10,6 @@ interface AuthRequest extends Request {
   };
 }
 
-
 // Add new team
 export const addTeam = async (req: AuthRequest, res: Response) => {
   try {
@@ -18,14 +17,16 @@ export const addTeam = async (req: AuthRequest, res: Response) => {
     if (!adminId) return res.status(401).json({ message: "Unauthorized" });
 
     const { name } = req.body;
-    if (!name) return res.status(400).json({ message: "Team name is required" });
+    if (!name)
+      return res.status(400).json({ message: "Team name is required" });
 
     const team = new Team({ name, adminId, points: 0 });
     await team.save();
 
     res.status(201).json(team);
   } catch (err) {
-    res.status(500).json({ message: "Failed to add team", error: err });
+    res.status(500).json({ message: "Failed to add team" });
+    console.error(err);
   }
 };
 
@@ -38,7 +39,8 @@ export const getTeams = async (req: AuthRequest, res: Response) => {
     const teams = await Team.find({ adminId });
     res.json(teams);
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch teams", error: err });
+    res.status(500).json({ message: "Failed to fetch teams" });
+    console.error(err);
   }
 };
 
@@ -51,17 +53,22 @@ export const deleteTeam = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const team = await Team.findOneAndDelete({ _id: id, adminId });
 
-    if (!team) return res.status(404).json({ message: "Team not found or not yours" });
+    if (!team)
+      return res.status(404).json({ message: "Team not found or not yours" });
 
     res.json({ message: "Team removed", team });
   } catch (err) {
-    res.status(500).json({ message: "Failed to delete team", error: err });
+    res.status(500).json({ message: "Failed to delete team" });
+    console.error(err);
   }
 };
 
 // Increase team points
 export const addPoints = async (req: AuthRequest, res: Response) => {
   try {
+    const adminId = req.user?.id;
+    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
+
     const { id } = req.params;
     const { points } = req.body;
 
@@ -84,6 +91,8 @@ export const addPoints = async (req: AuthRequest, res: Response) => {
 // Reduce team points by 5
 export const reducePoints = async (req: AuthRequest, res: Response) => {
   try {
+    const adminId = req.user?.id;
+    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
     const { id } = req.params;
 
     const team = await Team.findById(id);

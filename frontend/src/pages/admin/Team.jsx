@@ -5,11 +5,13 @@ import axiosInstance from "../../utils/axiosInstance";
 export default function Team() {
   const [teamName, setTeamName] = useState("");
   const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   // Fetch teams from backend
   const fetchTeams = async () => {
     try {
+      setLoading(true);
       const res = await axiosInstance.get("/team/teams");
       setTeams(res.data);
     } catch (err) {
@@ -17,6 +19,8 @@ export default function Team() {
         "Failed to fetch teams:",
         err.response?.data || err.message
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,7 +35,7 @@ export default function Team() {
       const res = await axiosInstance.post("/team/teams", {
         name: teamName.trim(),
       });
-      setTeams((prev) => [...prev, res.data]); // show immediately
+      setTeams((prev) => [...prev, res.data]); // backend returns created team object
       setTeamName("");
     } catch (err) {
       console.error("Failed to add team:", err.response?.data || err.message);
@@ -85,7 +89,7 @@ export default function Team() {
             borderRadius: 4,
             border: "none",
             background: "#007bff",
-            color: "#070202ff",
+            color: "#fff",
             cursor: "pointer",
           }}
         >
@@ -93,11 +97,13 @@ export default function Team() {
         </button>
       </div>
 
-      {/* ✅ Team List (shown just below the box) */}
+      {/* Team List */}
       <div style={{ marginBottom: 20 }}>
         <h4>Teams you added:</h4>
-        {teams.length === 0 ? (
-          <p style={{ color: "#0b0b0bff" }}>No teams added yet.</p>
+        {loading ? (
+          <p>Loading teams...</p>
+        ) : teams.length === 0 ? (
+          <p style={{ color: "#050202ff" }}>No teams added yet.</p>
         ) : (
           <ul style={{ listStyle: "none", padding: 0 }}>
             {teams.map((team) => (
@@ -108,12 +114,13 @@ export default function Team() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   padding: "6px 10px",
-                  border: "1px solid #0a0101ff",
+                  border: "1px solid #080707ff",
                   borderRadius: 4,
                   marginBottom: 6,
+                  color: "black",
                 }}
               >
-                {team.name}
+                {team.name} <span>({team.points} pts)</span>
                 <button
                   onClick={() => handleRemove(team._id)}
                   style={{
@@ -121,7 +128,7 @@ export default function Team() {
                     borderRadius: 4,
                     border: "none",
                     background: "#ff4d4f",
-                    color: "#0b0b0bff",
+                    color: "#fff",
                     cursor: "pointer",
                   }}
                 >
@@ -141,7 +148,7 @@ export default function Team() {
           borderRadius: 6,
           border: "none",
           background: "#28a745",
-          color: "#0f0e0eff",
+          color: "#fff",
           cursor: "pointer",
         }}
       >
