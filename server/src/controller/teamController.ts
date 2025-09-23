@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Team from "../models/team";
 
-// ✅ Extend Request type locally
+//  Extend Request type locally
 interface AuthRequest extends Request {
   user?: {
     id: string;
