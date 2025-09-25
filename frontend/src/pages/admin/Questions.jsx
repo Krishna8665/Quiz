@@ -321,7 +321,7 @@ export default function QuestionForm() {
             marginTop: 10,
           }}
         >
-          Add Question
+          Add a Question
         </button>
       </form>
     </div>
