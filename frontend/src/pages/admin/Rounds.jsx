@@ -1,7 +1,7 @@
 import React from "react";
 
 const Rounds = () => {
-  return <div>rounds</div>;
+  return <div>roundsssssssssssssss</div>;
 };
 
 export default Rounds;
