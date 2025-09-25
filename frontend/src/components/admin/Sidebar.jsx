@@ -4,7 +4,7 @@ import { NavLink, Outlet } from "react-router-dom";
 export default function AdminLayout() {
   const menuItems = [
     { name: "Dashboard", path: "/admin/dashboard" },
-    { name: "Teams", path: "/admin/teams" }, // ✅ keep consistent with routes
+    { name: "Teams", path: "/admin/teams" }, 
     { name: "Questions", path: "/admin/questions" },
     { name: "Rounds", path: "/admin/rounds" },
     { name: "Create Quiz-Master", path: "/admin/create" },
