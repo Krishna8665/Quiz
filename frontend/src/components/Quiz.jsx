@@ -178,7 +178,7 @@ export default function QuizApp() {
       )}
 
       <footer style={{ marginTop: 30, color: "#888" }}>
-        Tip: Choose a category to start. Correct answers highlight green.
+        Tip: Choose a category to start. Correct answers highlight in green.
       </footer>
     </div>
   );
