@@ -106,6 +106,7 @@ export const reducePoints = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: "5 points deducted", team });
   } catch (err) {
-    res.status(500).json({ message: "Failed to reduce points", error: err });
+    res.status(500).json({ message: "Failed to reduce points" });
+    console.error(err)
   }
 };

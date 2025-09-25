@@ -39,6 +39,7 @@ export default function Team() {
       setTeamName("");
     } catch (err) {
       console.error("Failed to add team:", err.response?.data || err.message);
+      console.log(error)
     }
   };
 
