@@ -4,7 +4,7 @@ import { NavLink, Outlet } from "react-router-dom";
 export default function AdminLayout() {
   const menuItems = [
     { name: "Dashboard", path: "/admin/dashboard" },
-    { name: "Teams", path: "/admin/teams" }, 
+    { name: "Teams", path: "/admin/teams" },
     { name: "Questions", path: "/admin/questions" },
     { name: "Rounds", path: "/admin/rounds" },
     { name: "Create Quiz-Master", path: "/admin/create" },
@@ -41,7 +41,7 @@ export default function AdminLayout() {
             style={({ isActive }) => ({
               padding: "12px 20px",
               textDecoration: "none",
-              color: isActive ? "#1f2937" : "#fff",
+              color: isActive ? "#1f2937" : "#f3eeeeff",
               background: isActive ? "#fff" : "transparent",
               margin: "0 10px 10px 10px",
               borderRadius: 6,
