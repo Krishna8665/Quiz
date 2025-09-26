@@ -12,7 +12,7 @@ export default function RoundGrid() {
     "Subject Round": 0,
   });
 
-  // Optional: fetch points from backend
+  // Optional: fetch points from baack
   useEffect(() => {
     const fetchPoints = async () => {
       try {
