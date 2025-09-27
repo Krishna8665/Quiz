@@ -23,7 +23,7 @@ export interface IQuestion extends Document {
 const questionSchema = new Schema<IQuestion>(
   {
     text: { type: String, required: true },
-    options: [{ type: String }], // multiple-choice options
+    options: [{ type: String }], // multiple-choice 
     correctAnswer: { type: String, required: true },
     points: { type: Number, default: 0 },
     category: {
