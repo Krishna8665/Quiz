@@ -67,7 +67,7 @@ export default function AdminLayout() {
       >
         <div
           style={{
-            background: "#fff",
+            background: "#100f0fff",
             borderRadius: "12px",
             padding: "30px",
             minHeight: "80vh",
