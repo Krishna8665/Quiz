@@ -17,7 +17,7 @@ export default function RoundGrid() {
     const fetchPoints = async () => {
       try {
         const res = await axios.get("http://localhost:3000/api/round/points");
-        // res.data should be { "General Round": 10, ... }
+        // res.data should be { "General Round": 10,  }
         setPoints(res.data);
       } catch (err) {
         console.error("Failed to fetch points:", err);
