@@ -15,8 +15,10 @@ export default function QuestionForm() {
     correctAnswer: "",
     points: 0,
     category: "",
+    round: "", 
     media: { type: "image", url: "" },
   });
+
   const [message, setMessage] = useState("");
 
   const API_URL = "http://localhost:3000/api/quiz";
@@ -68,7 +70,7 @@ export default function QuestionForm() {
             : formData.options[0].text,
       };
 
-      // Validate multiple-choice
+      // Validate multiple-choice correct answer
       if (
         formData.type === "multiple-choice" &&
         !formData.options.some((opt) => opt.id === formData.correctAnswer)
@@ -95,6 +97,7 @@ export default function QuestionForm() {
         correctAnswer: "",
         points: 0,
         category: "",
+        round: "",
         media: { type: "image", url: "" },
       });
     } catch (err) {
@@ -113,6 +116,15 @@ export default function QuestionForm() {
     "Biology",
     "Zoology",
     "Botany",
+  ];
+
+  // Round options
+  const rounds = [
+    "General Round",
+    "Subject Round",
+    "Estimation Round",
+    "Rapid Fire Round",
+    "Buzzer Round",
   ];
 
   return (
@@ -263,6 +275,27 @@ export default function QuestionForm() {
           {categories.map((cat) => (
             <option key={cat} value={cat}>
               {cat}
+            </option>
+          ))}
+        </select>
+
+        {/* Round Selection */}
+        <select
+          name="round"
+          value={formData.round}
+          onChange={handleChange}
+          required
+          style={{
+            padding: 10,
+            borderRadius: 6,
+            border: "1px solid #ccc",
+            fontSize: 16,
+          }}
+        >
+          <option value="">Select Round</option>
+          {rounds.map((rnd) => (
+            <option key={rnd} value={rnd}>
+              {rnd}
             </option>
           ))}
         </select>
