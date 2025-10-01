@@ -26,7 +26,8 @@ export const createQuestion = async (
     }
 
     const adminId = user.id;
-    const { text, options, correctAnswer, points, category, media } = req.body;
+    const { text, options, correctAnswer, points, category, media, round } =
+      req.body;
 
     let finalMedia = media || null;
     if (file) {
@@ -46,6 +47,7 @@ export const createQuestion = async (
       correctAnswer,
       points,
       category,
+      round,
       media: finalMedia,
       adminId,
     });
@@ -90,7 +92,10 @@ export const getQuizzes = async (req: Request, res: Response) => {
   }
 };
 
-export const getQuestions = async (req: AuthenticatedRequest, res: Response) => {
+export const getQuestions = async (
+  req: AuthenticatedRequest,
+  res: Response
+) => {
   try {
     const adminId = req.user?.id;
     const questions = await Question.find({ adminId }).lean();

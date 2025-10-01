@@ -13,6 +13,12 @@ export interface IQuestion extends Document {
     | "Biology"
     | "Zoology"
     | "Botany";
+  round:
+    | "General Round"
+    | "Subject Round"
+    | "Estimation Round"
+    | "Rapid Fire Round"
+    | "Buzzer Round";
   media?: {
     type: "image" | "video" | "file" | null;
     url: string | null;
@@ -23,12 +29,23 @@ export interface IQuestion extends Document {
 const questionSchema = new Schema<IQuestion>(
   {
     text: { type: String, required: true },
-    options: [{ type: String }], // multiple-choice options
+    options: [{ type: String }],
     correctAnswer: { type: String, required: true },
     points: { type: Number, default: 0 },
     category: {
       type: String,
       enum: ["Physics", "Maths", "Chemistry", "Biology", "Zoology", "Botany"],
+      required: true,
+    },
+    round: {
+      type: String,
+      enum: [
+        "General Round",
+        "Subject Round",
+        "Estimation Round",
+        "Rapid Fire Round",
+        "Buzzer Round",
+      ],
       required: true,
     },
     media: {
