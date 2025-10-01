@@ -15,7 +15,7 @@ export default function QuestionForm() {
     correctAnswer: "",
     points: 0,
     category: "",
-    round: "", 
+    round: "",
     media: { type: "image", url: "" },
   });
 
