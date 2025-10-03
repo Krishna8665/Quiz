@@ -23,7 +23,7 @@ export default function QuestionForm() {
 
   const API_URL = "http://localhost:3000/api/quiz";
 
-  // Handle  input
+  // Handle generic input
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
