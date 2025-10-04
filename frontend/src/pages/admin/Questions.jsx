@@ -36,7 +36,7 @@ export default function QuestionForm() {
     setFormData((prev) => ({ ...prev, options: newOptions }));
   };
 
-  // Handle question type change
+  // Handle question type 
   const handleTypeChange = (e) => {
     const type = e.target.value;
     setFormData((prev) => ({
