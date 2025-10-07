@@ -1,18 +1,15 @@
-// import * as multer from "multer";
+// import { Request } from "express";
 
-// declare global {
-//   namespace Express {
-//     interface Request {
-//       user?: {
-//         id: string;
-//         role: string;
-//         email?: string;
-//         name?: string;
-//       };
-//       file?: multer.File;
-//       files?: multer.File[] | { [fieldname: string]: multer.File[] };
-//     }
-//   }
+// // Extend Express Request to include `user` and optional `file` for multer
+// export interface AuthenticatedRequest extends Request {
+//   user?: {
+//     id: string;
+//     role?: string;
+//     email?: string;
+//   };
+//   file?: Express.Multer.File & {
+//     path?: string;
+//     filename?: string;
+//     public_id?: string;
+//   };
 // }
-
-// export {}; // 👈 this is required

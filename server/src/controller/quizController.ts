@@ -1,64 +1,34 @@
 import { Request, Response } from "express";
-import Quiz from "../models/quiz";
 import Question from "../models/question";
-import { uploadBufferToCloudinary } from "utils/cloudinaryUpload";
+import Quiz from "../models/quiz"; // Make sure you have a Quiz model
 
-// 👇 Define a local type for this file
 interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    role?: string;
-    email?: string;
+  user?: { id: string; role?: string; email?: string };
+  file?: Express.Multer.File & {
+    path?: string;
+    filename?: string;
+    public_id?: string;
   };
-  file?: Express.Multer.File;
-  files?: Express.Multer.File[];
 }
 
-export const createQuestion = async (
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<Response> => {
+// Create a new question
+export const createQuestion = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
   try {
     const user = req.user;
-    const file = req.file;
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-    if (!user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    const { text, options, correctAnswer, points, category, round } = req.body;
 
-    const adminId = user.id;
-    const { text, options, correctAnswer, points, category, media, round } =
-      req.body;
-
-    let finalMedia = media || null;
-     // ✅ If a file is uploaded, send it to Cloudinary
-    if (file && file.buffer) {
-      const result: any = await uploadBufferToCloudinary(
-        file.buffer,
-        "Quiz/questions"
-      );
+    let finalMedia = null;
+    if (req.file) {
+      const file = req.file as any;
       finalMedia = {
-        type:
-          result.resource_type === "video"
-            ? "video"
-            : result.resource_type === "image"
-            ? "image"
-            : "file",
-        url: result.secure_url,
-        publicId: result.public_id,
-        resourceType: result.resource_type,
+        type: file.resource_type || "file",
+        url: file.path || file.secure_url,
+        publicId: file.filename || file.public_id,
+        resourceType: file.resource_type || "raw",
       };
     }
-    
-      // finalMedia = {
-      //   type: file.mimetype.startsWith("image")
-      //     ? "image"
-      //     : file.mimetype.startsWith("video")
-      //     ? "video"
-      //     : "unknown",
-      //   url: `/uploads/${file.filename}`,
-      // };
-    
 
     const question = new Question({
       text,
@@ -68,55 +38,73 @@ export const createQuestion = async (
       category,
       round,
       media: finalMedia,
-      adminId,
+      adminId: user.id,
     });
 
     await question.save();
-    return res.json(question);
+    return res.status(201).json(question);
   } catch (err) {
     console.error("Error creating question:", err);
     return res.status(500).json({
       message: "Error creating question",
-      error: err instanceof Error ? err.message : "Unknown error",
+      error: err instanceof Error ? err.message : String(err),
     });
   }
 };
 
 // Create Quiz with rounds
-export const createQuiz = async (req: Request, res: Response) => {
+export const createQuiz = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
   try {
-    const { title, rounds } = req.body;
-    const quiz = new Quiz({ title, rounds });
-    await quiz.save();
+    const user = req.user;
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-    res.json(quiz);
+    const { title, rounds } = req.body;
+
+    const quiz = new Quiz({
+      title,
+      rounds,
+      adminId: user.id,
+    });
+
+    await quiz.save();
+    return res.status(201).json(quiz);
   } catch (err) {
-    res.status(500).json({ message: "Error creating quiz", error: err });
+    console.error("Error creating quiz:", err);
+    return res.status(500).json({
+      message: "Error creating quiz",
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 };
 
-// Get all quizzes
-export const getQuizzes = async (req: Request, res: Response) => {
+// Get all quizzes with populated rounds and questions
+export const getQuizzes = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
   try {
-    const quizzes = await Quiz.find().populate("rounds.questions");
+    const quizzes = await Quiz.find().populate({
+      path: "rounds.questions",
+      model: "Question",
+    });
 
     if (!quizzes || quizzes.length === 0) {
       return res.status(404).json({ message: "No quizzes found" });
     }
 
     return res.status(200).json(quizzes);
-  } catch (error) {
-    console.error("Error fetching quizzes:", error);
-    return res.status(500).json({ message: "Server error", error });
+  } catch (err) {
+    console.error("Error fetching quizzes:", err);
+    return res.status(500).json({
+      message: "Server error while fetching quizzes",
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 };
 
-export const getQuestions = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
+// Get questions for the current admin
+export const getQuestions = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
   try {
     const adminId = req.user?.id;
+    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
+
     const questions = await Question.find({ adminId }).lean();
 
     if (!questions || questions.length === 0) {
@@ -128,12 +116,12 @@ export const getQuestions = async (
       count: questions.length,
       data: questions,
     });
-  } catch (error) {
-    console.error("❌ Error fetching questions:", error);
+  } catch (err) {
+    console.error("Error fetching questions:", err);
     return res.status(500).json({
       success: false,
       message: "Server error while fetching questions",
-      error: (error as Error).message,
+      error: err instanceof Error ? err.message : String(err),
     });
   }
 };

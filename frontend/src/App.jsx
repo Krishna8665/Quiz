@@ -11,27 +11,26 @@ import Questions from "./pages/admin/Questions";
 import Teams from "./pages/admin/Team";
 import Rounds from "./pages/admin/Rounds";
 import Create from "./pages/admin/Create";
+
 function App() {
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<AuthForm />} />
-        <Route path="/team" element={<TeamManager />} />
-        <Route path="/quiz" element={<QuizApp />} />
-        <Route path="/team-list" element={<TeamGrid />} />
-        <Route path="/category" element={<RoundGrid />} />
-      </Routes>
-     <Routes>
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="teams" element={<Teams />} />
-          <Route path="questions" element={<Questions />} />
-          <Route path="rounds" element={<Rounds />} />
-          <Route path="create" element={<Create />} />
-        </Route>
-      </Routes>
-      
-    </>
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<AuthForm />} />
+      <Route path="/team" element={<TeamManager />} />
+      <Route path="/quiz" element={<QuizApp />} />
+      <Route path="/team-list" element={<TeamGrid />} />
+      <Route path="/category" element={<RoundGrid />} />
+
+      {/* Admin routes */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="teams" element={<Teams />} />
+        <Route path="questions" element={<Questions />} />
+        <Route path="rounds" element={<Rounds />} />
+        <Route path="create" element={<Create />} />
+      </Route>
+    </Routes>
   );
 }
 

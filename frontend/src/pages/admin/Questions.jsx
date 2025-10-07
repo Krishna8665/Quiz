@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
+import toast from "react-hot-toast";
 
 export default function QuestionForm() {
   const [formData, setFormData] = useState({
@@ -16,27 +17,25 @@ export default function QuestionForm() {
     points: 0,
     category: "",
     round: "",
-    media: { type: "image", url: "" },
   });
 
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [message, setMessage] = useState("");
 
   const API_URL = "http://localhost:3000/api/quiz";
 
-  // Handle generic input
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle option text change
   const handleOptionChange = (index, value) => {
     const newOptions = [...formData.options];
     newOptions[index].text = value;
     setFormData((prev) => ({ ...prev, options: newOptions }));
   };
 
-  // Handle question type change
   const handleTypeChange = (e) => {
     const type = e.target.value;
     setFormData((prev) => ({
@@ -55,33 +54,52 @@ export default function QuestionForm() {
     }));
   };
 
-  // Submit handler
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+    setPreview(URL.createObjectURL(selectedFile));
+  };
+
+  const handleFileRemove = () => {
+    setFile(null);
+    setPreview(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
 
     try {
-      const payload = {
-        ...formData,
-        options: formData.options.map((opt) => opt.text),
-        correctAnswer:
-          formData.type === "multiple-choice"
-            ? formData.correctAnswer
-            : formData.options[0].text,
-      };
+      const payload = new FormData();
+      payload.append("text", formData.text);
+      payload.append(
+        "options",
+        JSON.stringify(formData.options.map((opt) => opt.text))
+      );
 
-      // Validate multiple-choice correct answer
-      if (
-        formData.type === "multiple-choice" &&
-        !formData.options.some((opt) => opt.id === formData.correctAnswer)
-      ) {
-        setMessage("Please select a correct option.");
-        return;
+      // Send correct answer as ID for multiple-choice, text for short-answer
+      const correctAnswerValue =
+        formData.type === "multiple-choice"
+          ? formData.correctAnswer // ID of selected option
+          : formData.options[0].text; // text for short-answer
+
+      payload.append("correctAnswer", correctAnswerValue);
+      payload.append("points", formData.points.toString());
+      payload.append("category", formData.category);
+      payload.append("round", formData.round);
+
+      if (file) {
+        payload.append("media", file);
       }
 
       const token = localStorage.getItem("token");
+      if (!token) throw new Error("Unauthorized");
+
       await axios.post(`${API_URL}/create-question`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       setMessage("✅ Question added successfully!");
@@ -98,27 +116,20 @@ export default function QuestionForm() {
         points: 0,
         category: "",
         round: "",
-        media: { type: "image", url: "" },
       });
+      setFile(null);
+      setPreview(null);
+      toast.success("Question added successfully!");
     } catch (err) {
       console.error(err.response?.data || err);
+      toast.error(err.response?.data?.message || "Unable to upload.");
       setMessage(
         err.response?.data?.message || "❌ Failed to add question. Try again."
       );
     }
   };
 
-  // Category options from model enum
-  const categories = [
-    "Physics",
-    "Maths",
-    "Chemistry",
-    "Biology",
-    "Zoology",
-    "Botany",
-  ];
-
-  // Round options
+  const categories = ["Physics", "Maths", "Chemistry", "Biology", "Zoology", "Botany"];
   const rounds = [
     "General Round",
     "Subject Round",
@@ -136,23 +147,18 @@ export default function QuestionForm() {
         background: "#f9f9f9",
         borderRadius: 10,
         boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-        fontFamily: "Arial, sans-serif",
       }}
     >
-      <h2 style={{ textAlign: "center", marginBottom: 20, color: "black" }}>
-        Add Question
-      </h2>
+      <h2 style={{ textAlign: "center", marginBottom: 20 }}>Add Question</h2>
       {message && (
-        <p style={{ color: message.includes("❌") ? "red" : "green" }}>
-          {message}
-        </p>
+        <p style={{ color: message.includes("❌") ? "red" : "green" }}>{message}</p>
       )}
 
       <form
         onSubmit={handleSubmit}
         style={{ display: "flex", flexDirection: "column", gap: 15 }}
       >
-        {/* Question text */}
+        {/* Question Text */}
         <textarea
           name="text"
           value={formData.text}
@@ -168,7 +174,7 @@ export default function QuestionForm() {
           }}
         />
 
-        {/* Type */}
+        {/* Question Type */}
         <select
           value={formData.type}
           onChange={handleTypeChange}
@@ -200,15 +206,12 @@ export default function QuestionForm() {
           />
         ))}
 
-        {/* Correct Answer */}
+        {/* Correct Answer for Multiple Choice */}
         {formData.type === "multiple-choice" && (
           <select
             value={formData.correctAnswer}
             onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                correctAnswer: e.target.value,
-              }))
+              setFormData((prev) => ({ ...prev, correctAnswer: e.target.value }))
             }
             required
             style={{
@@ -226,6 +229,7 @@ export default function QuestionForm() {
           </select>
         )}
 
+        {/* Correct Answer for Short Answer */}
         {formData.type === "short-answer" && (
           <input
             type="text"
@@ -279,7 +283,7 @@ export default function QuestionForm() {
           ))}
         </select>
 
-        {/* Round Selection */}
+        {/* Round */}
         <select
           name="round"
           value={formData.round}
@@ -300,18 +304,11 @@ export default function QuestionForm() {
           ))}
         </select>
 
-        {/* Media URL */}
+        {/* File Upload */}
         <input
-          type="text"
-          name="media.url"
-          value={formData.media.url}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              media: { ...prev.media, url: e.target.value },
-            }))
-          }
-          placeholder="Media URL (optional)"
+          type="file"
+          onChange={handleFileChange}
+          accept="image/*,video/*"
           style={{
             padding: 10,
             borderRadius: 6,
@@ -320,26 +317,48 @@ export default function QuestionForm() {
           }}
         />
 
-        {/* Media Type */}
-        <select
-          name="media.type"
-          value={formData.media.type}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              media: { ...prev.media, type: e.target.value },
-            }))
-          }
-          style={{
-            padding: 10,
-            borderRadius: 6,
-            border: "1px solid #ccc",
-            fontSize: 16,
-          }}
-        >
-          <option value="image">Image</option>
-          <option value="video">Video</option>
-        </select>
+        {/* Preview & Delete */}
+        {preview && (
+          <div
+            style={{
+              position: "relative",
+              display: "inline-block",
+              marginTop: 10,
+            }}
+          >
+            {file.type.startsWith("image") ? (
+              <img
+                src={preview}
+                alt="Preview"
+                style={{ maxWidth: 200, borderRadius: 6 }}
+              />
+            ) : (
+              <video
+                src={preview}
+                controls
+                style={{ maxWidth: 200, borderRadius: 6 }}
+              />
+            )}
+            <button
+              type="button"
+              onClick={handleFileRemove}
+              style={{
+                position: "absolute",
+                top: -10,
+                right: -10,
+                background: "red",
+                color: "white",
+                border: "none",
+                borderRadius: "50%",
+                width: 25,
+                height: 25,
+                cursor: "pointer",
+              }}
+            >
+              &times;
+            </button>
+          </div>
+        )}
 
         <button
           type="submit"
