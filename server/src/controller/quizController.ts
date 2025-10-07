@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Quiz from "../models/quiz";
 import Question from "../models/question";
+import { uploadBufferToCloudinary } from "utils/cloudinaryUpload";
 
 // 👇 Define a local type for this file
 interface AuthenticatedRequest extends Request {
@@ -30,16 +31,34 @@ export const createQuestion = async (
       req.body;
 
     let finalMedia = media || null;
-    if (file) {
+     // ✅ If a file is uploaded, send it to Cloudinary
+    if (file && file.buffer) {
+      const result: any = await uploadBufferToCloudinary(
+        file.buffer,
+        "Quiz/questions"
+      );
       finalMedia = {
-        type: file.mimetype.startsWith("image")
-          ? "image"
-          : file.mimetype.startsWith("video")
-          ? "video"
-          : "unknown",
-        url: `/uploads/${file.filename}`,
+        type:
+          result.resource_type === "video"
+            ? "video"
+            : result.resource_type === "image"
+            ? "image"
+            : "file",
+        url: result.secure_url,
+        publicId: result.public_id,
+        resourceType: result.resource_type,
       };
     }
+    
+      // finalMedia = {
+      //   type: file.mimetype.startsWith("image")
+      //     ? "image"
+      //     : file.mimetype.startsWith("video")
+      //     ? "video"
+      //     : "unknown",
+      //   url: `/uploads/${file.filename}`,
+      // };
+    
 
     const question = new Question({
       text,

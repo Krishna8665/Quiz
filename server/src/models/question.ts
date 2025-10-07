@@ -22,6 +22,8 @@ export interface IQuestion extends Document {
   media?: {
     type: "image" | "video" | "file" | null;
     url: string | null;
+    publicId?: string | null; // Cloudinary public_id
+    resourceType?: string | null; // 'image', 'video', or 'raw'
   };
   adminId: mongoose.Types.ObjectId;
 }
@@ -56,7 +58,7 @@ const questionSchema = new Schema<IQuestion>(
       },
       url: { type: String, default: null },
     },
-    adminId: { type: Schema.Types.ObjectId, ref: "User" },
+    adminId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
 );
