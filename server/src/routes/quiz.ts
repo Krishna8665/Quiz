@@ -103,7 +103,7 @@ router.get("/all", authMiddleware(["admin"]), async (req, res, next) => {
   }
 });
 
-router.get("/questions", authMiddleware(["admin"]), async (req, res, next) => {
+router.get("/get-questions", authMiddleware(["admin"]), async (req, res, next) => {
   try {
     const authReq = req as AuthenticatedRequest;
     await getQuestions(authReq, res);
