@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 export default function AdminCreateUser() {
   const [formData, setFormData] = useState({
@@ -30,7 +31,7 @@ export default function AdminCreateUser() {
         }
       );
 
-      alert(`User created: ${res.data.user?.name || "Unknown"}`);
+      toast.success(`User created: ${res.data.user?.name || "Unknown"}`);
       setFormData({ name: "", email: "", password: "", role: "user" });
     } catch (err) {
       console.error(err);
@@ -39,28 +40,54 @@ export default function AdminCreateUser() {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "0 auto", padding: 20 }}>
-      <h2 style={{ color: "black" }}>Create Quiz-Master</h2>
+    <div
+      style={{
+        maxWidth: 600,
+        margin: "50px auto",
+        padding: "40px",
+        backgroundColor: "#f9f9f9ff",
+        borderRadius: "12px",
+        boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+      }}
+    >
+      <h2 style={{ color: "black", textAlign: "center", marginBottom: "20px" }}>
+        Create Quiz-Master
+      </h2>
+
       <form
         onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: 10 }}
+        style={{ display: "flex", flexDirection: "column", gap: "15px" }}
       >
         <input
           type="text"
           name="name"
           value={formData.name}
           onChange={handleChange}
-          placeholder="Name"
+          placeholder="Full Name"
           required
+          style={{
+            padding: "12px",
+            fontSize: "16px",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+          }}
         />
+
         <input
           type="email"
           name="email"
           value={formData.email}
           onChange={handleChange}
-          placeholder="Email"
+          placeholder="Email Address"
           required
+          style={{
+            padding: "12px",
+            fontSize: "16px",
+            borderRadius: "8px",
+            border: "1px solid #fcfbfbff",
+          }}
         />
+
         <input
           type="password"
           name="password"
@@ -68,18 +95,32 @@ export default function AdminCreateUser() {
           onChange={handleChange}
           placeholder="Password"
           required
+          style={{
+            padding: "12px",
+            fontSize: "16px",
+            borderRadius: "8px",
+            border: "1px solid #fbf9f9ff",
+          }}
         />
 
-        {/*  if admin to choose role */}
-        {/* 
-        <select name="role" value={formData.role} onChange={handleChange}>
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
-        */}
-
-        <button type="submit">Create User</button>
+        <button
+          type="submit"
+          style={{
+            padding: "14px",
+            fontSize: "16px",
+            borderRadius: "8px",
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          Create User
+        </button>
       </form>
+
+      
     </div>
   );
 }

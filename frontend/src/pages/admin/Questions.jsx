@@ -103,6 +103,7 @@ export default function QuestionForm() {
       });
 
       setMessage("✅ Question added successfully!");
+      setTimeout(() => setMessage(""), 3000);
       setFormData({
         text: "",
         type: "multiple-choice",
@@ -126,10 +127,18 @@ export default function QuestionForm() {
       setMessage(
         err.response?.data?.message || "❌ Failed to add question. Try again."
       );
+      setTimeout(() => setMessage(""), 3000);
     }
   };
 
-  const categories = ["Physics", "Maths", "Chemistry", "Biology", "Zoology", "Botany"];
+  const categories = [
+    "Physics",
+    "Maths",
+    "Chemistry",
+    "Biology",
+    "Zoology",
+    "Botany",
+  ];
   const rounds = [
     "General Round",
     "Subject Round",
@@ -149,9 +158,13 @@ export default function QuestionForm() {
         boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
       }}
     >
-      <h2 style={{ textAlign: "center", marginBottom: 20 }}>Add Question</h2>
+      <h2 style={{ textAlign: "center", marginBottom: 20, color: "black" }}>
+        Add a Question
+      </h2>
       {message && (
-        <p style={{ color: message.includes("❌") ? "red" : "green" }}>{message}</p>
+        <p style={{ color: message.includes("❌") ? "red" : "green" }}>
+          {message}
+        </p>
       )}
 
       <form
@@ -211,7 +224,10 @@ export default function QuestionForm() {
           <select
             value={formData.correctAnswer}
             onChange={(e) =>
-              setFormData((prev) => ({ ...prev, correctAnswer: e.target.value }))
+              setFormData((prev) => ({
+                ...prev,
+                correctAnswer: e.target.value,
+              }))
             }
             required
             style={{
