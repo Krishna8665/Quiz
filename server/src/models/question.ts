@@ -1,5 +1,4 @@
-// models/Question.ts
-import mongoose, { Schema, Document, Model } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
 export interface IQuestion extends Document {
   text: string;
@@ -13,17 +12,12 @@ export interface IQuestion extends Document {
     | "Biology"
     | "Zoology"
     | "Botany";
-  round:
-    | "General Round"
-    | "Subject Round"
-    | "Estimation Round"
-    | "Rapid Fire Round"
-    | "Buzzer Round";
+  round: mongoose.Types.ObjectId; // references for Round
   media?: {
     type: "image" | "video" | "file" | null;
     url: string | null;
-    publicId?: string | null; // Cloudinary public_id
-    resourceType?: string | null; // 'image', 'video', or 'raw'
+    publicId?: string | null;
+    resourceType?: string | null;
   };
   adminId: mongoose.Types.ObjectId;
 }
@@ -40,14 +34,8 @@ const questionSchema = new Schema<IQuestion>(
       required: true,
     },
     round: {
-      type: String,
-      enum: [
-        "General Round",
-        "Subject Round",
-        "Estimation Round",
-        "Rapid Fire Round",
-        "Buzzer Round",
-      ],
+      type: Schema.Types.ObjectId,
+      ref: "Round", // Links to Round schema
       required: true,
     },
     media: {

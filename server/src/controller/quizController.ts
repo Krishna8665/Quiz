@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Question from "../models/question";
-import Quiz from "../models/quiz"; // Make sure you have a Quiz model
+import Quiz from "../models/createRounds"; // Make sure you have a Quiz model
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; role?: string; email?: string };
@@ -12,7 +12,10 @@ interface AuthenticatedRequest extends Request {
 }
 
 // Create a new question
-export const createQuestion = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+export const createQuestion = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
   try {
     const user = req.user;
     if (!user) return res.status(401).json({ message: "Unauthorized" });
@@ -53,7 +56,10 @@ export const createQuestion = async (req: AuthenticatedRequest, res: Response): 
 };
 
 // Create Quiz with rounds
-export const createQuiz = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+export const createQuiz = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
   try {
     const user = req.user;
     if (!user) return res.status(401).json({ message: "Unauthorized" });
@@ -78,7 +84,10 @@ export const createQuiz = async (req: AuthenticatedRequest, res: Response): Prom
 };
 
 // Get all quizzes with populated rounds and questions
-export const getQuizzes = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+export const getQuizzes = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
   try {
     const quizzes = await Quiz.find().populate({
       path: "rounds.questions",
@@ -100,7 +109,10 @@ export const getQuizzes = async (req: AuthenticatedRequest, res: Response): Prom
 };
 
 // Get questions for the current admin
-export const getQuestions = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+export const getQuestions = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
   try {
     const adminId = req.user?.id;
     if (!adminId) return res.status(401).json({ message: "Unauthorized" });
