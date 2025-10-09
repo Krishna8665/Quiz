@@ -12,7 +12,9 @@ export default function Team() {
   const fetchTeams = async () => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get("/team/teams");
+      const res = await axiosInstance.get("/team/teams", {
+        withCredentials: true, // send JWT cookie
+      });
       setTeams(res.data);
     } catch (err) {
       console.error(
@@ -32,21 +34,25 @@ export default function Team() {
   const handleAdd = async () => {
     if (!teamName.trim()) return;
     try {
-      const res = await axiosInstance.post("/team/teams", {
-        name: teamName.trim(),
-      });
+      const res = await axiosInstance.post(
+        "/team/teams",
+        { name: teamName.trim() },
+        { withCredentials: true }
+      );
       setTeams((prev) => [...prev, res.data]); // backend returns created team object
       setTeamName("");
     } catch (err) {
       console.error("Failed to add team:", err.response?.data || err.message);
-      console.log(error)
+      console.log(error);
     }
   };
 
   // Remove team
   const handleRemove = async (id) => {
     try {
-      await axiosInstance.delete(`/team/teams/${id}`);
+      await axiosInstance.delete(
+        `/team/teams/${id}`, { withCredentials: true }
+      );
       setTeams((prev) => prev.filter((t) => t._id !== id));
     } catch (err) {
       console.error(

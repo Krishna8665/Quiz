@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import toast from "react-hot-toast";
@@ -19,11 +19,31 @@ export default function QuestionForm() {
     round: "",
   });
 
+  const [rounds, setRounds] = useState([]); // dynamic rounds
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [message, setMessage] = useState("");
 
-  const API_URL = "http://localhost:3000/api/quiz";
+  const API_URL = "http://localhost:3000/api";
+
+  // Fetch rounds on mount
+  useEffect(() => {
+    const fetchRounds = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/round/get-rounds`, {
+          withCredentials: true, // ✅ send cookies automatically
+        });
+        setRounds(res.data.rounds || []);
+      } catch (err) {
+        console.error(
+          "Error fetching rounds:",
+          err.response?.data || err.message
+        );
+        toast.error("Failed to load rounds");
+      }
+    };
+    fetchRounds();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -77,7 +97,6 @@ export default function QuestionForm() {
         JSON.stringify(formData.options.map((opt) => opt.text))
       );
 
-      // Send correct answer as ID for multiple-choice, text for short-answer
       const correctAnswerValue =
         formData.type === "multiple-choice"
           ? formData.correctAnswer // ID of selected option
@@ -88,22 +107,19 @@ export default function QuestionForm() {
       payload.append("category", formData.category);
       payload.append("round", formData.round);
 
-      if (file) {
-        payload.append("media", file);
-      }
+      if (file) payload.append("media", file);
 
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Unauthorized");
-
-      await axios.post(`${API_URL}/create-question`, payload, {
+      const res = await axios.post(`${API_URL}/quiz/create-question`, payload, {
+        withCredentials: true, // ✅ send cookie automatically
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
         },
       });
 
+      toast.success("Question added successfully!");
       setMessage("✅ Question added successfully!");
-      setTimeout(() => setMessage(""), 3000);
+
+      // reset form
       setFormData({
         text: "",
         type: "multiple-choice",
@@ -120,14 +136,12 @@ export default function QuestionForm() {
       });
       setFile(null);
       setPreview(null);
-      toast.success("Question added successfully!");
     } catch (err) {
       console.error(err.response?.data || err);
       toast.error(err.response?.data?.message || "Unable to upload.");
       setMessage(
         err.response?.data?.message || "❌ Failed to add question. Try again."
       );
-      setTimeout(() => setMessage(""), 3000);
     }
   };
 
@@ -138,13 +152,6 @@ export default function QuestionForm() {
     "Biology",
     "Zoology",
     "Botany",
-  ];
-  const rounds = [
-    "General Round",
-    "Subject Round",
-    "Estimation Round",
-    "Rapid Fire Round",
-    "Buzzer Round",
   ];
 
   return (
@@ -219,7 +226,7 @@ export default function QuestionForm() {
           />
         ))}
 
-        {/* Correct Answer for Multiple Choice */}
+        {/* Correct Answer */}
         {formData.type === "multiple-choice" && (
           <select
             value={formData.correctAnswer}
@@ -245,7 +252,6 @@ export default function QuestionForm() {
           </select>
         )}
 
-        {/* Correct Answer for Short Answer */}
         {formData.type === "short-answer" && (
           <input
             type="text"
@@ -314,13 +320,13 @@ export default function QuestionForm() {
         >
           <option value="">Select Round</option>
           {rounds.map((rnd) => (
-            <option key={rnd} value={rnd}>
-              {rnd}
+            <option key={rnd._id} value={rnd._id}>
+              {rnd.name}
             </option>
           ))}
         </select>
 
-        {/* File Upload */}
+        {/* File */}
         <input
           type="file"
           onChange={handleFileChange}
@@ -333,7 +339,6 @@ export default function QuestionForm() {
           }}
         />
 
-        {/* Preview & Delete */}
         {preview && (
           <div
             style={{

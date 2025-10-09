@@ -49,7 +49,7 @@ export default function CreateRound() {
         fontFamily: "Arial, sans-serif",
       }}
     >
-      <h2 style={{ textAlign: "center" }}>Create Round</h2>
+      <h2 style={{ textAlign: "center", color: "black" }}>Create Round</h2>
       {message && (
         <p
           style={{

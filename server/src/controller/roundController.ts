@@ -1,15 +1,12 @@
-import {Request, Response } from "express";
+import { Request, Response } from "express";
 import mongoose from "mongoose";
 import Round from "../models/createRounds";
 import jwt from "jsonwebtoken";
 
-
-
-
 export interface AuthRequest extends Request {
   user?: {
-    id: string;    // User's MongoDB _id as string
-    role: string;  // User's role, e.g., "admin" or "user"
+    id: string; // User's MongoDB _id as string
+    role: string; // User's role, e.g., "admin" or "user"
   };
 }
 
@@ -56,11 +53,15 @@ export const getRounds = async (req: AuthRequest, res: Response) => {
   try {
     const adminId = req.user?.id;
     if (!adminId) {
-      return res.status(401).json({ message: "Unauthorized: Admin ID missing" });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: Admin ID missing" });
     }
 
     // Find rounds created by this admin
-    const rounds = await Round.find({ adminId }).populate("adminId", "name email");
+    const rounds = await Round.find({ adminId })
+      .populate("adminId", "name email")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       message: "Rounds fetched successfully",
@@ -71,7 +72,6 @@ export const getRounds = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 // DELETE a round by ID
 export const deleteRound = async (req: AuthRequest, res: Response) => {
@@ -84,13 +84,17 @@ export const deleteRound = async (req: AuthRequest, res: Response) => {
     }
 
     if (!adminId) {
-      return res.status(401).json({ message: "Unauthorized: Admin ID missing" });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: Admin ID missing" });
     }
 
     // Find the round created by this admin
     const round = await Round.findOne({ _id: roundId, adminId });
     if (!round) {
-      return res.status(404).json({ message: "Round not found or not owned by you" });
+      return res
+        .status(404)
+        .json({ message: "Round not found or not owned by you" });
     }
 
     await Round.findByIdAndDelete(roundId);
