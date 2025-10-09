@@ -25,18 +25,22 @@ export default function AuthForm() {
       if (isRegister) {
         const res = await axios.post(
           "http://localhost:3000/api/auth/register",
-          formData
+          formData,
+          { withCredentials: true }
         );
         setMessage(res.data.message);
       } else {
-        const res = await axios.post("http://localhost:3000/api/auth/login", {
-          email: formData.email,
-          password: formData.password,
-        });
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("user", JSON.stringify(res.data.user));
+        const res = await axios.post(
+          "http://localhost:3000/api/auth/login",
+          {
+            email: formData.email,
+            password: formData.password,
+          },
+          { withCredentials: true } // 👈 allows backend to set cookie
+        );
+
         setMessage("Login successful!");
-        navigate("/team");
+        navigate("/admin"); // 👈 redirect to round creation page
       }
     } catch (err) {
       setMessage(

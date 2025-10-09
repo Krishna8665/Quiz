@@ -46,13 +46,12 @@ export const login = async (req: Request, res: Response) => {
       { expiresIn: "1d" }
     );
 
-    // Set cookie
     res.cookie("token", token, {
-      httpOnly: true, // can't be accessed via JS
-      secure: process.env.NODE_ENV === "production", // only send over HTTPS in prod
-      sameSite: "strict", // prevent CSRF
-      maxAge: 24 * 60 * 60 * 1000, // 1 day in ms
-    });
+    httpOnly: true,       // cannot access from JS (good!)
+    secure: false,        // true if using HTTPS in production
+    sameSite: "lax",      // important for cross-site requests
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+  });
 
     // remove password before sending user object
     const userObj = user.toJSON();
