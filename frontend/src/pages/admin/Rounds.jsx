@@ -64,6 +64,7 @@ export default function CreateRound() {
         onSubmit={handleSubmit}
         style={{ display: "flex", flexDirection: "column", gap: 15 }}
       >
+        <label style={{ color: "black" }}>Round Name:</label>
         <input
           type="text"
           name="name"
@@ -77,9 +78,10 @@ export default function CreateRound() {
             border: "1px solid #ccc",
           }}
         />
+        <label style={{ color: "black" }}>Set Timer Per Round/Question</label>
         <input
           type="number"
-          name="timePerQuestion"
+          name=""
           placeholder="Time per Question (in seconds)"
           value={formData.timePerQuestion}
           onChange={handleChange}
