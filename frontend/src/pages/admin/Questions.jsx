@@ -117,7 +117,7 @@ export default function QuestionForm() {
       });
 
       toast.success("Question added successfully!");
-      setMessage("✅ Question added successfully!");
+      //setMessage("✅ Question added successfully!");
 
       // reset form
       setFormData({

@@ -14,37 +14,57 @@ export interface AuthRequest extends Request {
 
 export const createRound = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, timePerQuestion } = req.body;
+    const adminId = req.user?.id;
+    const { rounds } = req.body; // expect an array of rounds
 
-    if (!name || !timePerQuestion) {
-      return res
-        .status(400)
-        .json({ message: "Name and time per question are required" });
+    if (!adminId) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // Prevent duplicates
-    const existingRound = await Round.findOne({ name });
-    if (existingRound) {
-      return res
-        .status(400)
-        .json({ message: "Round with this name already exists" });
+    if (!rounds || !Array.isArray(rounds) || rounds.length === 0) {
+      return res.status(400).json({ message: "No rounds provided" });
     }
 
-    // req.user is set by authMiddleware
-    const newRound = new Round({
-      name,
-      timePerQuestion,
-      adminId: req.user?.id, // ✅ attach adminId here
-    });
+    // Validate each round
+    for (const round of rounds) {
+      if (!round.name || !round.timeLimitValue) {
+        return res
+          .status(400)
+          .json({ message: "Each round must have name and time value" });
+      }
+    }
 
-    await newRound.save();
+    // Check for duplicate round names
+    const names = rounds.map((r) => r.name);
+    const existing = await Round.find({ name: { $in: names }, adminId });
+    if (existing.length > 0) {
+      return res.status(400).json({
+        message: `Duplicate round names: ${existing
+          .map((r) => r.name)
+          .join(", ")}`,
+      });
+    }
+
+    // Create rounds
+    const newRounds = await Round.insertMany(
+      rounds.map((r) => ({
+        name: r.name,
+        timeLimitType: r.timeLimitType,
+        timeLimitValue: r.timeLimitValue,
+        adminId,
+        rules: {
+          enablePass: r.rules?.enablePass || false,
+          enableNegative: r.rules?.enableNegative || false,
+        },
+      }))
+    );
 
     res.status(201).json({
-      message: "Round created successfully",
-      round: newRound,
+      message: "Rounds created successfully",
+      rounds: newRounds,
     });
   } catch (error: any) {
-    console.error("Error creating round:", error);
+    console.error("Error creating rounds:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

@@ -6,7 +6,7 @@ export default function AdminLayout() {
     { name: "Dashboard", path: "/admin/dashboard" },
     { name: "Teams", path: "/admin/teams" },
     { name: "Questions", path: "/admin/questions" },
-    { name: "Rounds", path: "/admin/rounds" },
+    { name: "create-Quizz", path: "/admin/rounds" },
     { name: "Create Quiz-Master", path: "/admin/create" },
   ];
 
