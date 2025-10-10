@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function CreateRound() {
   const [numRounds, setNumRounds] = useState(1);
@@ -8,6 +9,7 @@ export default function CreateRound() {
       name: "",
       timeLimitType: "perQuestion",
       timeLimitValue: "",
+      category: "general", // ✅ Added default category
       rules: { enablePass: false, enableNegative: false },
     },
   ]);
@@ -23,6 +25,7 @@ export default function CreateRound() {
           name: "",
           timeLimitType: "perQuestion",
           timeLimitValue: "",
+          category: "general", // ✅ Added
           rules: { enablePass: false, enableNegative: false },
         });
       }
@@ -40,13 +43,7 @@ export default function CreateRound() {
     setRounds((prev) =>
       prev.map((r, i) =>
         i === index
-          ? {
-              ...r,
-              rules: {
-                ...r.rules,
-                [rule]: !r.rules[rule],
-              },
-            }
+          ? { ...r, rules: { ...r.rules, [rule]: !r.rules[rule] } }
           : r
       )
     );
@@ -63,19 +60,20 @@ export default function CreateRound() {
         { withCredentials: true }
       );
 
-      setMessage(res.data.message || "✅ Rounds created successfully!");
+      toast.success("✅ Rounds created successfully!");
       setNumRounds(1);
       setRounds([
         {
           name: "",
           timeLimitType: "perQuestion",
           timeLimitValue: "",
+          category: "general",
           rules: { enablePass: false, enableNegative: false },
         },
       ]);
     } catch (err) {
       console.error("Error creating rounds:", err);
-      setMessage(
+      toast.error(
         err.response?.data?.message || "❌ Failed to create rounds. Try again."
       );
     }
@@ -92,20 +90,10 @@ export default function CreateRound() {
         fontFamily: "Arial, sans-serif",
       }}
     >
+      <Toaster position="top-center" />
       <h2 style={{ textAlign: "center", color: "black" }}>
         Create Round(s) with Rules
       </h2>
-
-      {message && (
-        <p
-          style={{
-            color: message.includes("success") ? "green" : "red",
-            textAlign: "center",
-          }}
-        >
-          {message}
-        </p>
-      )}
 
       <form onSubmit={handleSubmit}>
         <label style={{ color: "black" }}>Number of Rounds:</label>
@@ -134,6 +122,7 @@ export default function CreateRound() {
           >
             <h4 style={{ color: "black" }}>Round {index + 1}</h4>
 
+            {/* ROUND NAME */}
             <label style={{ color: "black" }}>Round Name:</label>
             <input
               type="text"
@@ -150,6 +139,7 @@ export default function CreateRound() {
               }}
             />
 
+            {/* TIME TYPE */}
             <label style={{ color: "black" }}>Time Limit Type:</label>
             <select
               value={round.timeLimitType}
@@ -168,6 +158,7 @@ export default function CreateRound() {
               <option value="perRound">Per Round</option>
             </select>
 
+            {/* TIME VALUE */}
             <label style={{ color: "black" }}>Time (in seconds):</label>
             <input
               type="number"
@@ -187,8 +178,10 @@ export default function CreateRound() {
               }}
             />
 
+            {/* RULES */}
             <div style={{ display: "flex", flexDirection: "column" }}>
-              <label style={{ color: "black" ,fontSize:"20px" }}>Rules</label>
+              <label style={{ color: "black", fontSize: "18px" }}>Rules</label>
+
               <label style={{ color: "black" }}>
                 <input
                   type="checkbox"
@@ -208,6 +201,28 @@ export default function CreateRound() {
                 />
                 Enable Point Reduction on Wrong Question
               </label>
+
+              {/* CATEGORY */}
+              <label style={{ color: "black", marginTop: 10 }}>Category:</label>
+              <select
+                value={round.category}
+                onChange={(e) =>
+                  handleRoundChange(index, "category", e.target.value)
+                } // ✅ fixed here
+                style={{
+                  width: "100%",
+                  padding: 10,
+                  borderRadius: 6,
+                  border: "1px solid #ccc",
+                  marginBottom: 10,
+                }}
+              >
+                <option value="general">General Round</option>
+                <option value="subject">Subject Round</option>
+                <option value="estimation">Estimation Round</option>
+                <option value="rapidfire">Rapid Fire Round</option>
+                <option value="buzzer">Buzzer Round</option>
+              </select>
             </div>
           </div>
         ))}
