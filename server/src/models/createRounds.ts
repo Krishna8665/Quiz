@@ -10,6 +10,7 @@ export interface IRound extends Document {
     enablePass: boolean;
     enableNegative: boolean;
   };
+  category: "general" | "subject" | "estimation" | "rapidfire" | "buzzer";
   adminId: mongoose.Types.ObjectId;
 }
 
@@ -26,6 +27,11 @@ const roundSchema = new Schema<IRound>(
     rules: {
       enablePass: { type: Boolean, default: false },
       enableNegative: { type: Boolean, default: false },
+    },
+    category: {
+      type: String,
+      enum: ["general", "subject", "estimation", "rapidfire", "buzzer"],
+      required: true,
     },
     adminId: { type: Schema.Types.ObjectId, required: true },
   },

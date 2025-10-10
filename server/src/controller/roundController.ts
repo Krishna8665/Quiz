@@ -56,6 +56,7 @@ export const createRound = async (req: AuthRequest, res: Response) => {
           enablePass: r.rules?.enablePass || false,
           enableNegative: r.rules?.enableNegative || false,
         },
+        category: r.category,
       }))
     );
 
