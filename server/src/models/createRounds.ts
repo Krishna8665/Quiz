@@ -1,39 +1,33 @@
-// models/Round.ts
+// models/createRounds.ts
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IRound extends Document {
   name: string;
-  timeLimitType: "perRound" | "perQuestion"; // 🆕 add this
+  category: string;
+  timeLimitType: "perRound" | "perQuestion";
   timeLimitValue: number;
-  // description?: string;
   rules: {
     enablePass: boolean;
     enableNegative: boolean;
   };
-  category: "general" | "subject" | "estimation" | "rapidfire" | "buzzer";
   adminId: mongoose.Types.ObjectId;
 }
 
 const roundSchema = new Schema<IRound>(
   {
-    name: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    category: { type: String, required: true },
     timeLimitType: {
       type: String,
       enum: ["perRound", "perQuestion"],
-      default: "perQuestion",
+      required: true,
     },
     timeLimitValue: { type: Number, required: true },
-    //description: { type: String },
     rules: {
       enablePass: { type: Boolean, default: false },
       enableNegative: { type: Boolean, default: false },
     },
-    category: {
-      type: String,
-      enum: ["general", "subject", "estimation", "rapidfire", "buzzer"],
-      required: true,
-    },
-    adminId: { type: Schema.Types.ObjectId, required: true },
+    adminId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
 );

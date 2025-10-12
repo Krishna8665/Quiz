@@ -2,18 +2,18 @@ import React, { useState } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
-export default function CreateRound() {
+export default function CreateQuiz() {
+  const [quizName, setQuizName] = useState("");
   const [numRounds, setNumRounds] = useState(1);
   const [rounds, setRounds] = useState([
     {
       name: "",
       timeLimitType: "perQuestion",
       timeLimitValue: "",
-      category: "general", // ✅ Added default category
+      category: "general",
       rules: { enablePass: false, enableNegative: false },
     },
   ]);
-  const [message, setMessage] = useState("");
 
   const handleNumChange = (e) => {
     const count = Math.max(1, parseInt(e.target.value) || 1);
@@ -25,7 +25,7 @@ export default function CreateRound() {
           name: "",
           timeLimitType: "perQuestion",
           timeLimitValue: "",
-          category: "general", // ✅ Added
+          category: "general",
           rules: { enablePass: false, enableNegative: false },
         });
       }
@@ -51,16 +51,26 @@ export default function CreateRound() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
+
+    if (!quizName.trim()) {
+      toast.error("Please enter a quiz name");
+      return;
+    }
 
     try {
+      const payload = {
+        name: quizName,
+        rounds,
+      };
+
       const res = await axios.post(
-        "http://localhost:3000/api/round/create-rounds",
-        { rounds },
+        "http://localhost:3000/api/quiz/create-quiz",
+        payload,
         { withCredentials: true }
       );
 
-      toast.success("✅ Rounds created successfully!");
+      toast.success("✅ Quiz created successfully!");
+      setQuizName("");
       setNumRounds(1);
       setRounds([
         {
@@ -72,9 +82,9 @@ export default function CreateRound() {
         },
       ]);
     } catch (err) {
-      console.error("Error creating rounds:", err);
+      console.error("Error creating quiz:", err);
       toast.error(
-        err.response?.data?.message || "❌ Failed to create rounds. Try again."
+        err.response?.data?.message || "❌ Failed to create quiz. Try again."
       );
     }
   };
@@ -82,20 +92,36 @@ export default function CreateRound() {
   return (
     <div
       style={{
-        maxWidth: 650,
-        margin: "60px auto",
-        padding: 20,
+        maxWidth: 700,
+        margin: "50px auto",
+        padding: 25,
         border: "1px solid #ccc",
-        borderRadius: 10,
+        borderRadius: 12,
         fontFamily: "Arial, sans-serif",
       }}
     >
       <Toaster position="top-center" />
-      <h2 style={{ textAlign: "center", color: "black" }}>
-        Create Round(s) with Rules
-      </h2>
+      <h2 style={{ textAlign: "center", color: "black" }}>🧩 Create Quiz</h2>
 
       <form onSubmit={handleSubmit}>
+        {/* QUIZ NAME */}
+        <label style={{ color: "black" }}>Quiz Name:</label>
+        <input
+          type="text"
+          placeholder="Enter quiz name"
+          value={quizName}
+          onChange={(e) => setQuizName(e.target.value)}
+          required
+          style={{
+            padding: 10,
+            borderRadius: 6,
+            border: "1px solid #ccc",
+            width: "100%",
+            marginBottom: 20,
+          }}
+        />
+
+        {/* NUMBER OF ROUNDS */}
         <label style={{ color: "black" }}>Number of Rounds:</label>
         <input
           type="number"
@@ -110,6 +136,7 @@ export default function CreateRound() {
           }}
         />
 
+        {/* ROUND DETAILS */}
         {rounds.map((round, index) => (
           <div
             key={index}
@@ -118,11 +145,12 @@ export default function CreateRound() {
               padding: 15,
               borderRadius: 8,
               marginBottom: 15,
+              backgroundColor: "#fafafa",
             }}
           >
             <h4 style={{ color: "black" }}>Round {index + 1}</h4>
 
-            {/* ROUND NAME */}
+            {/* Round Name */}
             <label style={{ color: "black" }}>Round Name:</label>
             <input
               type="text"
@@ -139,7 +167,7 @@ export default function CreateRound() {
               }}
             />
 
-            {/* TIME TYPE */}
+            {/* Time Type */}
             <label style={{ color: "black" }}>Time Limit Type:</label>
             <select
               value={round.timeLimitType}
@@ -158,7 +186,7 @@ export default function CreateRound() {
               <option value="perRound">Per Round</option>
             </select>
 
-            {/* TIME VALUE */}
+            {/* Time Value */}
             <label style={{ color: "black" }}>Time (in seconds):</label>
             <input
               type="number"
@@ -178,7 +206,7 @@ export default function CreateRound() {
               }}
             />
 
-            {/* RULES */}
+            {/* Rules */}
             <div style={{ display: "flex", flexDirection: "column" }}>
               <label style={{ color: "black", fontSize: "18px" }}>Rules</label>
 
@@ -201,29 +229,29 @@ export default function CreateRound() {
                 />
                 Enable Point Reduction on Wrong Question
               </label>
-
-              {/* CATEGORY */}
-              <label style={{ color: "black", marginTop: 10 }}>Category:</label>
-              <select
-                value={round.category}
-                onChange={(e) =>
-                  handleRoundChange(index, "category", e.target.value)
-                } // ✅ fixed here
-                style={{
-                  width: "100%",
-                  padding: 10,
-                  borderRadius: 6,
-                  border: "1px solid #ccc",
-                  marginBottom: 10,
-                }}
-              >
-                <option value="general">General Round</option>
-                <option value="subject">Subject Round</option>
-                <option value="estimation">Estimation Round</option>
-                <option value="rapidfire">Rapid Fire Round</option>
-                <option value="buzzer">Buzzer Round</option>
-              </select>
             </div>
+
+            {/* Category */}
+            <label style={{ color: "black", marginTop: 10 }}>Category:</label>
+            <select
+              value={round.category}
+              onChange={(e) =>
+                handleRoundChange(index, "category", e.target.value)
+              }
+              style={{
+                width: "100%",
+                padding: 10,
+                borderRadius: 6,
+                border: "1px solid #ccc",
+                marginBottom: 10,
+              }}
+            >
+              <option value="general">General Round</option>
+              <option value="subject">Subject Round</option>
+              <option value="estimation">Estimation Round</option>
+              <option value="rapidfire">Rapid Fire Round</option>
+              <option value="buzzer">Buzzer Round</option>
+            </select>
           </div>
         ))}
 
@@ -240,7 +268,7 @@ export default function CreateRound() {
             width: "100%",
           }}
         >
-          Create Round(s)
+          Create Quiz
         </button>
       </form>
     </div>

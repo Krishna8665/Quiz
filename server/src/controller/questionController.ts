@@ -55,58 +55,58 @@ export const createQuestion = async (
   }
 };
 
-// Create Quiz with rounds
-export const createQuiz = async (
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<Response> => {
-  try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Unauthorized" });
+// // Create Quiz with rounds
+// export const createQuiz = async (
+//   req: AuthenticatedRequest,
+//   res: Response
+// ): Promise<Response> => {
+//   try {
+//     const user = req.user;
+//     if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-    const { title, rounds } = req.body;
+//     const { title, rounds } = req.body;
 
-    const quiz = new Quiz({
-      title,
-      rounds,
-      adminId: user.id,
-    });
+//     const quiz = new Quiz({
+//       title,
+//       rounds,
+//       adminId: user.id,
+//     });
 
-    await quiz.save();
-    return res.status(201).json(quiz);
-  } catch (err) {
-    console.error("Error creating quiz:", err);
-    return res.status(500).json({
-      message: "Error creating quiz",
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-};
+//     await quiz.save();
+//     return res.status(201).json(quiz);
+//   } catch (err) {
+//     console.error("Error creating quiz:", err);
+//     return res.status(500).json({
+//       message: "Error creating quiz",
+//       error: err instanceof Error ? err.message : String(err),
+//     });
+//   }
+// };
 
-// Get all quizzes with populated rounds and questions
-export const getQuizzes = async (
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<Response> => {
-  try {
-    const quizzes = await Quiz.find().populate({
-      path: "rounds.questions",
-      model: "Question",
-    });
+// // Get all quizzes with populated rounds and questions
+// export const getQuizzes = async (
+//   req: AuthenticatedRequest,
+//   res: Response
+// ): Promise<Response> => {
+//   try {
+//     const quizzes = await Quiz.find().populate({
+//       path: "rounds.questions",
+//       model: "Question",
+//     });
 
-    if (!quizzes || quizzes.length === 0) {
-      return res.status(404).json({ message: "No quizzes found" });
-    }
+//     if (!quizzes || quizzes.length === 0) {
+//       return res.status(404).json({ message: "No quizzes found" });
+//     }
 
-    return res.status(200).json(quizzes);
-  } catch (err) {
-    console.error("Error fetching quizzes:", err);
-    return res.status(500).json({
-      message: "Server error while fetching quizzes",
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-};
+//     return res.status(200).json(quizzes);
+//   } catch (err) {
+//     console.error("Error fetching quizzes:", err);
+//     return res.status(500).json({
+//       message: "Server error while fetching quizzes",
+//       error: err instanceof Error ? err.message : String(err),
+//     });
+//   }
+// };
 
 // Get questions for the current admin
 export const getQuestions = async (
