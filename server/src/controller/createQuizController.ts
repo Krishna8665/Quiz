@@ -17,6 +17,8 @@ interface RoundInput {
 interface QuizInput {
   name: string;
   rounds: RoundInput[];
+  teams: string[]; // team IDs
+  numTeams: number;
 }
 
 export const createQuiz = async (req: AuthRequest, res: Response) => {
@@ -31,7 +33,7 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: "Invalid or missing JSON body" });
     }
 
-    const { name, rounds } = req.body as QuizInput;
+    const { name, rounds, teams, numTeams } = req.body as QuizInput;
 
     if (!name || !rounds?.length) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -57,6 +59,8 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
       name,
       adminId,
       rounds: createdRounds.map((r) => r._id),
+      teams, // team IDs from frontend
+      numTeams,
     });
 
     return res.status(201).json({
