@@ -74,3 +74,63 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+export const getQuiz = async (req: AuthRequest, res: Response) => {
+  try {
+    const adminId = req.user?.id || req.user?.id;
+    if (!adminId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // Find all quizzes created by the admin and populate related data
+    const quiz = await Quiz.find({ adminId })
+      .populate("rounds")
+      .populate("teams");
+
+    if (!quiz.length) {
+      return res.status(200).json({ message: "No quiz found", quiz: [] });
+    }
+
+    return res.status(200).json({
+      message: "Quizzes fetched successfully",
+      quiz,
+    });
+  } catch (error: any) {
+    console.error("Error fetching quiz:", error.message);
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+
+export const deleteQuiz = async (req: AuthRequest, res: Response) => {
+  try {
+    const adminId = req.user?.id || req.user?.id;
+    if (!adminId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { id } = req.params;
+
+    const quiz = await Quiz.findOne({ _id: id, adminId });
+    if (!quiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    // Delete related rounds first (optional but cleaner)
+    await Round.deleteMany({ _id: { $in: quiz.rounds } });
+
+    // Delete the quiz
+    await Quiz.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      message: "Quiz and related rounds deleted successfully",
+    });
+  } catch (error: any) {
+    console.error("Error deleting quiz:", error.message);
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
+  }
+};

@@ -109,12 +109,16 @@ export default function QuestionForm() {
 
       if (file) payload.append("media", file);
 
-      const res = await axios.post(`${API_URL}/quiz/create-question`, payload, {
-        withCredentials: true, // ✅ send cookie automatically
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const res = await axios.post(
+        `${API_URL}/question/create-question`,
+        payload,
+        {
+          withCredentials: true, // ✅ send cookie automatically
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       toast.success("Question added successfully!");
       //setMessage("✅ Question added successfully!");
