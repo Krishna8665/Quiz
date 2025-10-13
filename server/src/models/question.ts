@@ -12,7 +12,7 @@ export interface IQuestion extends Document {
     | "Biology"
     | "Zoology"
     | "Botany";
-  round: mongoose.Types.ObjectId; // references for Round
+  round: mongoose.Types.ObjectId; 
   media?: {
     type: "image" | "video" | "file" | null;
     url: string | null;
