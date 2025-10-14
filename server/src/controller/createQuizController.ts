@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
+import mongoose, { Types } from "mongoose";
 import Quiz from "../models/createQuiz";
 import Round from "../models/createRounds";
+import Question from "../models/question";
 import { AuthRequest } from "./types";
 
 interface RoundInput {
@@ -12,36 +14,47 @@ interface RoundInput {
     enablePass?: boolean;
     enableNegative?: boolean;
   };
+  questions?: (string | Types.ObjectId)[]; // ✅ accept both ObjectId or string
 }
 
 interface QuizInput {
   name: string;
   rounds: RoundInput[];
-  teams: string[]; // team IDs
+  teams: (string | Types.ObjectId)[];
   numTeams: number;
 }
 
 export const createQuiz = async (req: AuthRequest, res: Response) => {
   try {
     const adminId = req.user?.id || req.user?.id;
-    if (!adminId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
 
-    //Ensure body is parsed
-    if (!req.body || typeof req.body !== "object") {
-      return res.status(400).json({ message: "Invalid or missing JSON body" });
-    }
-
-    const { name, rounds, teams, numTeams } = req.body as QuizInput;
-
+    const { name, rounds, teams, numTeams } = req.body;
     if (!name || !rounds?.length) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    //Create rounds first
-    const createdRounds = await Round.insertMany(
-      rounds.map((r) => ({
+    // ✅ Track used question IDs in this quiz to prevent duplicates
+    const usedQuestionIds: string[] = [];
+
+    const createdRounds = [];
+
+    for (const r of rounds) {
+      // check for question duplication within this quiz
+      const duplicate = r.questions?.some((qId: string) =>
+        usedQuestionIds.includes(qId)
+      );
+      if (duplicate) {
+        return res.status(400).json({
+          message: "A question is being reused across multiple rounds.",
+        });
+      }
+
+      // add to used list
+      if (r.questions) usedQuestionIds.push(...r.questions);
+
+      // create the round
+      const round = await Round.create({
         name: r.name,
         category: r.category,
         timeLimitType: r.timeLimitType,
@@ -51,27 +64,36 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
           enablePass: r.rules?.enablePass ?? false,
           enableNegative: r.rules?.enableNegative ?? false,
         },
-      }))
-    );
+        questions: r.questions,
+      });
 
-    // create quiz
+      // ✅ Update each question to reference its round
+      if (r.questions?.length) {
+        await Question.updateMany(
+          { _id: { $in: r.questions } },
+          { $set: { roundId: round._id } }
+        );
+      }
+
+      createdRounds.push(round);
+    }
+
+    // ✅ Create quiz finally
     const quiz = await Quiz.create({
       name,
       adminId,
       rounds: createdRounds.map((r) => r._id),
-      teams, // team IDs from frontend
+      teams,
       numTeams,
     });
 
     return res.status(201).json({
-      message: "Quiz created successfully",
+      message: "Quiz created successfully with assigned questions",
       quiz,
     });
   } catch (error: any) {
-    console.error("Error creating quiz:", error.message, error.stack);
-    return res.status(500).json({
-      message: error.message || "Internal server error",
-    });
+    console.error("Error creating quiz:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

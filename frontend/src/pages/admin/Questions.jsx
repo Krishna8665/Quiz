@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function QuestionForm() {
   const [formData, setFormData] = useState({
@@ -16,46 +16,19 @@ export default function QuestionForm() {
     correctAnswer: "",
     points: 0,
     category: "",
-    round: "",
   });
 
-  const [rounds, setRounds] = useState([]); // dynamic rounds
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
-  const [message, setMessage] = useState("");
-
   const API_URL = "http://localhost:3000/api";
 
-  // Fetch rounds on mount
-  useEffect(() => {
-    const fetchRounds = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/round/get-rounds`, {
-          withCredentials: true, // ✅ send cookies automatically
-        });
-        setRounds(res.data.rounds || []);
-      } catch (err) {
-        console.error(
-          "Error fetching rounds:",
-          err.response?.data || err.message
-        );
-        toast.error("Failed to load rounds");
-      }
-    };
-    fetchRounds();
-  }, []);
-
+  // 🟢 Handle field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleOptionChange = (index, value) => {
-    const newOptions = [...formData.options];
-    newOptions[index].text = value;
-    setFormData((prev) => ({ ...prev, options: newOptions }));
-  };
-
+  // 🟢 Handle type change
   const handleTypeChange = (e) => {
     const type = e.target.value;
     setFormData((prev) => ({
@@ -74,6 +47,14 @@ export default function QuestionForm() {
     }));
   };
 
+  // 🟢 Handle options change
+  const handleOptionChange = (index, value) => {
+    const newOptions = [...formData.options];
+    newOptions[index].text = value;
+    setFormData((prev) => ({ ...prev, options: newOptions }));
+  };
+
+  // 🟢 Handle media
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     setFile(selectedFile);
@@ -85,10 +66,9 @@ export default function QuestionForm() {
     setPreview(null);
   };
 
+  // 🟢 Submit question
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
-
     try {
       const payload = new FormData();
       payload.append("text", formData.text);
@@ -99,31 +79,23 @@ export default function QuestionForm() {
 
       const correctAnswerValue =
         formData.type === "multiple-choice"
-          ? formData.correctAnswer // ID of selected option
-          : formData.options[0].text; // text for short-answer
+          ? formData.correctAnswer
+          : formData.options[0].text;
 
       payload.append("correctAnswer", correctAnswerValue);
       payload.append("points", formData.points.toString());
       payload.append("category", formData.category);
-      payload.append("round", formData.round);
 
       if (file) payload.append("media", file);
 
-      const res = await axios.post(
-        `${API_URL}/question/create-question`,
-        payload,
-        {
-          withCredentials: true, // ✅ send cookie automatically
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      await axios.post(`${API_URL}/question/create-question`, payload, {
+        withCredentials: true,
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-      toast.success("Question added successfully!");
-      //setMessage("✅ Question added successfully!");
+      toast.success("✅ Question added successfully!");
 
-      // reset form
+      // Reset form
       setFormData({
         text: "",
         type: "multiple-choice",
@@ -136,16 +108,12 @@ export default function QuestionForm() {
         correctAnswer: "",
         points: 0,
         category: "",
-        round: "",
       });
       setFile(null);
       setPreview(null);
     } catch (err) {
-      console.error(err.response?.data || err);
-      toast.error(err.response?.data?.message || "Unable to upload.");
-      setMessage(
-        err.response?.data?.message || "❌ Failed to add question. Try again."
-      );
+      console.error(err);
+      toast.error(err.response?.data?.message || "❌ Failed to add question.");
     }
   };
 
@@ -164,19 +132,13 @@ export default function QuestionForm() {
         maxWidth: 700,
         margin: "50px auto",
         padding: 30,
-        background: "#f9f9f9",
+        background: "#fff",
         borderRadius: 10,
         boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
       }}
     >
-      <h2 style={{ textAlign: "center", marginBottom: 20, color: "black" }}>
-        Add a Question
-      </h2>
-      {message && (
-        <p style={{ color: message.includes("❌") ? "red" : "green" }}>
-          {message}
-        </p>
-      )}
+      <Toaster position="top-center" />
+      <h2 style={{ textAlign: "center", color: "black" }}>Add Question</h2>
 
       <form
         onSubmit={handleSubmit}
@@ -194,18 +156,17 @@ export default function QuestionForm() {
             borderRadius: 6,
             border: "1px solid #ccc",
             fontSize: 16,
-            resize: "vertical",
           }}
         />
 
-        {/* Question Type */}
+        {/* Type */}
         <select
           value={formData.type}
           onChange={handleTypeChange}
           style={{
             padding: 10,
             borderRadius: 6,
-            border: "1px solid #0a0505ff",
+            border: "1px solid #ccc",
           }}
         >
           <option value="multiple-choice">Multiple Choice</option>
@@ -231,7 +192,7 @@ export default function QuestionForm() {
         ))}
 
         {/* Correct Answer */}
-        {formData.type === "multiple-choice" && (
+        {formData.type === "multiple-choice" ? (
           <select
             value={formData.correctAnswer}
             onChange={(e) =>
@@ -244,7 +205,7 @@ export default function QuestionForm() {
             style={{
               padding: 10,
               borderRadius: 6,
-              border: "1px solid #0b0909ff",
+              border: "1px solid #ccc",
             }}
           >
             <option value="">Select Correct Option</option>
@@ -254,9 +215,7 @@ export default function QuestionForm() {
               </option>
             ))}
           </select>
-        )}
-
-        {formData.type === "short-answer" && (
+        ) : (
           <input
             type="text"
             placeholder="Correct Answer"
@@ -267,7 +226,6 @@ export default function QuestionForm() {
               padding: 10,
               borderRadius: 6,
               border: "1px solid #ccc",
-              fontSize: 16,
             }}
           />
         )}
@@ -284,7 +242,6 @@ export default function QuestionForm() {
             padding: 10,
             borderRadius: 6,
             border: "1px solid #ccc",
-            fontSize: 16,
           }}
         />
 
@@ -298,7 +255,6 @@ export default function QuestionForm() {
             padding: 10,
             borderRadius: 6,
             border: "1px solid #ccc",
-            fontSize: 16,
           }}
         >
           <option value="">Select Category</option>
@@ -309,28 +265,7 @@ export default function QuestionForm() {
           ))}
         </select>
 
-        {/* Round */}
-        <select
-          name="round"
-          value={formData.round}
-          onChange={handleChange}
-          required
-          style={{
-            padding: 10,
-            borderRadius: 6,
-            border: "1px solid #ccc",
-            fontSize: 16,
-          }}
-        >
-          <option value="">Select Round</option>
-          {rounds.map((rnd) => (
-            <option key={rnd._id} value={rnd._id}>
-              {rnd.name}
-            </option>
-          ))}
-        </select>
-
-        {/* File */}
+        {/* File Upload */}
         <input
           type="file"
           onChange={handleFileChange}
@@ -339,19 +274,12 @@ export default function QuestionForm() {
             padding: 10,
             borderRadius: 6,
             border: "1px solid #ccc",
-            fontSize: 16,
           }}
         />
 
         {preview && (
-          <div
-            style={{
-              position: "relative",
-              display: "inline-block",
-              marginTop: 10,
-            }}
-          >
-            {file.type.startsWith("image") ? (
+          <div style={{ position: "relative", display: "inline-block" }}>
+            {file?.type.startsWith("image") ? (
               <img
                 src={preview}
                 alt="Preview"
@@ -380,7 +308,7 @@ export default function QuestionForm() {
                 cursor: "pointer",
               }}
             >
-              &times;
+              ×
             </button>
           </div>
         )}
@@ -395,10 +323,9 @@ export default function QuestionForm() {
             color: "#fff",
             fontSize: 16,
             cursor: "pointer",
-            marginTop: 10,
           }}
         >
-          Add a Question
+          Add Question
         </button>
       </form>
     </div>

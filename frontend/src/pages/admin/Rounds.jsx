@@ -4,10 +4,13 @@ import toast, { Toaster } from "react-hot-toast";
 
 export default function CreateQuiz() {
   const [teams, setTeams] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [usedQuestions, setUsedQuestions] = useState([]); // globally used questions
+
   const [selectedTeams, setSelectedTeams] = useState([]);
   const [numTeams, setNumTeams] = useState(1);
-
   const [numRounds, setNumRounds] = useState(1);
+
   const [rounds, setRounds] = useState([
     {
       name: "",
@@ -15,13 +18,13 @@ export default function CreateQuiz() {
       timeLimitValue: "",
       category: "general",
       rules: { enablePass: false, enableNegative: false },
+      questions: [],
     },
   ]);
 
   const [quizName, setQuizName] = useState("");
-  const [message, setMessage] = useState("");
 
-  // Fetch teams for admin
+  // ✅ Fetch teams
   useEffect(() => {
     const fetchTeams = async () => {
       try {
@@ -37,19 +40,24 @@ export default function CreateQuiz() {
     fetchTeams();
   }, []);
 
-  const handleNumTeamsChange = (e) => {
-    const val = Math.max(1, parseInt(e.target.value) || 1);
-    setNumTeams(val);
-  };
+  // ✅ Fetch questions
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:3000/api/question/get-questions",
+          { withCredentials: true }
+        );
+        setQuestions(res.data.data || []);
+      } catch (err) {
+        console.error("Error fetching questions:", err);
+        toast.error("Failed to fetch questions");
+      }
+    };
+    fetchQuestions();
+  }, []);
 
-  const handleTeamSelect = (teamId) => {
-    setSelectedTeams((prev) =>
-      prev.includes(teamId)
-        ? prev.filter((id) => id !== teamId)
-        : [...prev, teamId]
-    );
-  };
-
+  // ✅ Handle number of rounds
   const handleNumRoundsChange = (e) => {
     const count = Math.max(1, parseInt(e.target.value) || 1);
     setNumRounds(count);
@@ -62,34 +70,68 @@ export default function CreateQuiz() {
           timeLimitValue: "",
           category: "general",
           rules: { enablePass: false, enableNegative: false },
+          questions: [],
         });
       }
       return newRounds.slice(0, count);
     });
   };
 
+  // ✅ Handle round data change
   const handleRoundChange = (index, field, value) => {
     setRounds((prev) =>
       prev.map((r, i) => (i === index ? { ...r, [field]: value } : r))
     );
   };
 
+  // ✅ Only one rule can be selected
   const handleRuleChange = (index, rule) => {
     setRounds((prev) =>
-      prev.map((r, i) =>
-        i === index
-          ? { ...r, rules: { ...r.rules, [rule]: !r.rules[rule] } }
-          : r
-      )
+      prev.map((r, i) => {
+        if (i !== index) return r;
+        return {
+          ...r,
+          rules: {
+            enablePass: rule === "enablePass",
+            enableNegative: rule === "enableNegative",
+          },
+        };
+      })
     );
   };
 
+  // ✅ Handle question select/unselect per round
+  const handleQuestionSelect = (roundIndex, questionId) => {
+    setRounds((prevRounds) => {
+      const newRounds = prevRounds.map((r, i) => {
+        if (i !== roundIndex) return r;
+        const round = { ...r };
+        const isSelected = round.questions.includes(questionId);
+
+        if (isSelected) {
+          // Unselect question
+          round.questions = round.questions.filter((id) => id !== questionId);
+        } else {
+          // Select question
+          round.questions.push(questionId);
+        }
+        return round;
+      });
+
+      // Update usedQuestions globally (lock question if used in any round)
+      const allSelected = newRounds.flatMap((r) => r.questions);
+      setUsedQuestions(allSelected);
+
+      return newRounds;
+    });
+  };
+
+  // ✅ Submit quiz
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
 
     try {
-      const res = await axios.post(
+      await axios.post(
         "http://localhost:3000/api/quiz/create-quiz",
         {
           name: quizName,
@@ -99,6 +141,7 @@ export default function CreateQuiz() {
         },
         { withCredentials: true }
       );
+
       toast.success("✅ Quiz created successfully!");
       setQuizName("");
       setNumTeams(1);
@@ -111,8 +154,10 @@ export default function CreateQuiz() {
           timeLimitValue: "",
           category: "general",
           rules: { enablePass: false, enableNegative: false },
+          questions: [],
         },
       ]);
+      setUsedQuestions([]);
     } catch (err) {
       console.error("Error creating quiz:", err);
       toast.error(err.response?.data?.message || "❌ Failed to create quiz");
@@ -122,7 +167,7 @@ export default function CreateQuiz() {
   return (
     <div
       style={{
-        maxWidth: 700,
+        maxWidth: 750,
         margin: "60px auto",
         padding: 20,
         border: "1px solid #ccc",
@@ -134,13 +179,12 @@ export default function CreateQuiz() {
       <h2 style={{ textAlign: "center", color: "black" }}>Create Quiz</h2>
 
       <form onSubmit={handleSubmit}>
-        {/* Quiz Name */}
+        {/* Quiz name */}
         <label style={{ color: "black" }}>Quiz Name:</label>
         <input
           type="text"
           value={quizName}
           onChange={(e) => setQuizName(e.target.value)}
-          placeholder="Enter quiz name"
           required
           style={{
             padding: 10,
@@ -151,79 +195,43 @@ export default function CreateQuiz() {
           }}
         />
 
-        {/* Number of Teams */}
-        <label style={{ color: "black" }}>Number of Teams:</label>
-        <input
-          type="number"
-          min="1"
-          value={numTeams}
-          onChange={handleNumTeamsChange}
-          style={{
-            padding: 10,
-            borderRadius: 6,
-            border: "1px solid #ccc",
-            width: "100%",
-            marginBottom: 15,
-          }}
-        />
-
-        {/* Team Selection */}
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ color: "black" }}>Select Teams:</label>
-          <div>
-            {teams.map((team) => (
-              <label
-                key={team._id}
-                style={{ display: "block", color: "black" }}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedTeams.includes(team._id)}
-                  onChange={() => handleTeamSelect(team._id)}
-                  style={{ marginRight: 8 }}
-                />
-                {team.name}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Number of Rounds */}
+        {/* Number of rounds */}
         <label style={{ color: "black" }}>Number of Rounds:</label>
         <input
           type="number"
-          min="1"
           value={numRounds}
+          min="1"
           onChange={handleNumRoundsChange}
           style={{
             padding: 10,
             borderRadius: 6,
             border: "1px solid #ccc",
             width: "100%",
-            marginBottom: 15,
+            marginBottom: 20,
           }}
         />
 
-        {/* Rounds */}
+        {/* Rounds list */}
         {rounds.map((round, index) => (
           <div
             key={index}
             style={{
               border: "1px solid #ddd",
-              padding: 15,
               borderRadius: 8,
-              marginBottom: 15,
+              padding: 15,
+              marginBottom: 20,
             }}
           >
-            <h4 style={{ color: "black" }}>Round {index + 1}</h4>
+            <h3 style={{ color: "black" }}>Round {index + 1}</h3>
 
-            <label style={{ color: "black" }}>Round Name:</label>
+            {/* Round name */}
+            <label style={{ color: "black" }}>Name:</label>
             <input
               type="text"
-              placeholder="Enter round name"
               value={round.name}
               onChange={(e) => handleRoundChange(index, "name", e.target.value)}
               required
+              placeholder="Enter round name"
               style={{
                 padding: 10,
                 borderRadius: 6,
@@ -233,6 +241,29 @@ export default function CreateQuiz() {
               }}
             />
 
+            {/* Category */}
+            <label style={{ color: "black" }}>Category:</label>
+            <select
+              value={round.category}
+              onChange={(e) =>
+                handleRoundChange(index, "category", e.target.value)
+              }
+              style={{
+                padding: 10,
+                borderRadius: 6,
+                border: "1px solid #ccc",
+                width: "100%",
+                marginBottom: 10,
+              }}
+            >
+              <option value="general round">General Round</option>
+              <option value="subject round">Subject Round</option>
+              <option value="estimation round">Estimation Round</option>
+              <option value="rapid fire round">Rapid Fire Round</option>
+              <option value="buzzer round">Buzzer Round</option>
+            </select>
+
+            {/* Time Limit Type */}
             <label style={{ color: "black" }}>Time Limit Type:</label>
             <select
               value={round.timeLimitType}
@@ -251,10 +282,10 @@ export default function CreateQuiz() {
               <option value="perRound">Per Round</option>
             </select>
 
-            <label style={{ color: "black" }}>Time (in seconds):</label>
+            {/* Time Limit */}
+            <label style={{ color: "black" }}>Time Limit (seconds):</label>
             <input
               type="number"
-              placeholder="e.g., 30"
               value={round.timeLimitValue}
               onChange={(e) =>
                 handleRoundChange(index, "timeLimitValue", e.target.value)
@@ -270,49 +301,69 @@ export default function CreateQuiz() {
               }}
             />
 
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <label style={{ color: "black", fontSize: "18px" }}>Rules</label>
-
+            {/* Rules */}
+            <label style={{ color: "black", fontWeight: "bold" }}>Rules:</label>
+            <div style={{ marginBottom: 10 }}>
               <label style={{ color: "black" }}>
                 <input
-                  type="checkbox"
+                  type="radio"
+                  name={`rule-${index}`}
                   checked={round.rules.enablePass}
                   onChange={() => handleRuleChange(index, "enablePass")}
                   style={{ marginRight: 8 }}
                 />
                 Enable Pass
               </label>
-
+              <br />
               <label style={{ color: "black" }}>
                 <input
-                  type="checkbox"
+                  type="radio"
+                  name={`rule-${index}`}
                   checked={round.rules.enableNegative}
                   onChange={() => handleRuleChange(index, "enableNegative")}
                   style={{ marginRight: 8 }}
                 />
                 Enable Negative Points
               </label>
+            </div>
 
-              <label style={{ color: "black", marginTop: 10 }}>Category:</label>
-              <select
-                value={round.category}
-                onChange={(e) =>
-                  handleRoundChange(index, "category", e.target.value)
-                }
-                style={{
-                  width: "100%",
-                  padding: 10,
-                  borderRadius: 6,
-                  border: "1px solid #ccc",
-                  marginBottom: 10,
-                }}
-              >
-                <option value="general">General Round</option>
-                <option value="subject">Subject Round</option>
-                <option value="estimation">Estimation Round</option>
-                <option value="rapidfire">Rapid Fire Round</option>
-                <option value="buzzer">Buzzer Round</option>
-              </select>
+            {/* Question Selector */}
+            <label style={{ color: "black" }}>Select Questions:</label>
+            <div
+              style={{
+                maxHeight: 200,
+                overflowY: "auto",
+                border: "1px solid #ddd",
+                padding: 10,
+                borderRadius: 6,
+                background: "#f9f9f9",
+              }}
+            >
+              {questions.map((q) => {
+                const isUsed =
+                  usedQuestions.includes(q._id) &&
+                  !round.questions.includes(q._id);
+                return (
+                  <label
+                    key={q._id}
+                    style={{
+                      display: "block",
+                      opacity: isUsed ? 0.5 : 1,
+                      color: isUsed ? "gray" : "black",
+                      cursor: isUsed ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      disabled={isUsed}
+                      checked={round.questions.includes(q._id)}
+                      onChange={() => handleQuestionSelect(index, q._id)}
+                      style={{ marginRight: 8 }}
+                    />
+                    {q.text}
+                  </label>
+                );
+              })}
             </div>
           </div>
         ))}

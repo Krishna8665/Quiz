@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IQuestion extends Document {
   text: string;
@@ -12,7 +12,8 @@ export interface IQuestion extends Document {
     | "Biology"
     | "Zoology"
     | "Botany";
-  round: mongoose.Types.ObjectId; 
+  roundId?: Types.ObjectId;
+  quizId?: Types.ObjectId; // ✅ prevent reuse across rounds of same quiz
   media?: {
     type: "image" | "video" | "file" | null;
     url: string | null;
@@ -25,7 +26,7 @@ export interface IQuestion extends Document {
 const questionSchema = new Schema<IQuestion>(
   {
     text: { type: String, required: true },
-    options: [{ type: String }],
+    options: [{ type: String, required: true }],
     correctAnswer: { type: String, required: true },
     points: { type: Number, default: 0 },
     category: {
@@ -33,11 +34,8 @@ const questionSchema = new Schema<IQuestion>(
       enum: ["Physics", "Maths", "Chemistry", "Biology", "Zoology", "Botany"],
       required: true,
     },
-    round: {
-      type: Schema.Types.ObjectId,
-      ref: "Round", // Links to Round schema
-      required: true,
-    },
+    roundId: { type: Schema.Types.ObjectId, ref: "Round" },
+    quizId: { type: Schema.Types.ObjectId, ref: "Quiz" }, // ✅ track quiz usage
     media: {
       type: {
         type: String,

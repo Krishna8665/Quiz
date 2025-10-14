@@ -20,7 +20,10 @@ export const createQuestion = async (
     const user = req.user;
     if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-    const { text, options, correctAnswer, points, category, round } = req.body;
+    const { text, options, correctAnswer, points, category } = req.body;
+    if (!text || !options?.length || !correctAnswer || !category) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
     let finalMedia = null;
     if (req.file) {
@@ -39,7 +42,6 @@ export const createQuestion = async (
       correctAnswer,
       points,
       category,
-      round,
       media: finalMedia,
       adminId: user.id,
     });
