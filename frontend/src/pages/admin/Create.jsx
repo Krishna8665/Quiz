@@ -42,15 +42,23 @@ export default function AdminCreateUser() {
   return (
     <div
       style={{
-        maxWidth: 600,
+        maxWidth: 1000,
         margin: "50px auto",
-        padding: "40px",
+        padding: "180px",
         backgroundColor: "#f9f9f9ff",
-        borderRadius: "12px",
+        borderRadius: "22px",
         boxShadow: "0 0 10px rgba(0,0,0,0.1)",
       }}
     >
-      <h2 style={{ color: "black", textAlign: "center", marginBottom: "20px" }}>
+      <h2
+        style={{
+          color: "black",
+          textAlign: "center",
+          marginBottom: "20px",
+          fontWeight: 700,
+          fontSize: "28x",
+        }}
+      >
         Create Quiz-Master
       </h2>
 
@@ -119,8 +127,6 @@ export default function AdminCreateUser() {
           Create User
         </button>
       </form>
-
-      
     </div>
   );
 }

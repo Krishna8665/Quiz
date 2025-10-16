@@ -1,28 +1,50 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Users, HelpCircle } from "lucide-react"; // icons
 
 export default function Dashboard() {
-  return (
-    <div className="flex flex-col md:flex-row gap-6 p-6">
-      {/* Teams Added Box */}
-      <div className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-          Teams Added
-        </h2>
-        <div className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex items-center justify-center text-gray-500 dark:text-gray-400">
-          {/* Content for Teams */}
-          No teams added yet
-        </div>
-      </div>
+  const navigate = useNavigate();
 
-      {/* Quiz Masters Box */}
-      <div className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">
-          Quiz Masters
-        </h2>
-        <div className="flex-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex items-center justify-center text-gray-500 dark:text-gray-400">
-          {/* Content for Quiz Masters */}
-          No quiz masters added yet
-        </div>
+  const bentoItems = [
+    {
+      title: "Manage Quiz Masters",
+      description:
+        "Add, edit, or remove quiz masters who can create and manage quizzes.",
+      icon: <Users size={40} className="text-blue-500" />,
+      color: "bg-black-100 text-black-700 dark:bg-blue-900/30",
+      onClick: () => navigate("/admin/manage-quiz-masters"),
+    },
+    {
+      title: "Manage Questions",
+      description: "Create, update, and organize questions for quizzes.",
+      icon: <HelpCircle size={40} className="text-green-500" />,
+      color: "bg-green-100 dark:bg-green-900/30",
+      onClick: () => navigate("/admin/manage-questions"),
+    },
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black-200 dark:bg-gray-900 px-6 py-12">
+      <h1 className="text-3xl font-bold mb-10 text-gray-900 dark:text-black text-center">
+        Admin Dashboard
+      </h1>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-5xl w-full col-black">
+        {bentoItems.map((item, index) => (
+          <div
+            key={index}
+            onClick={item.onClick}
+            className={`cursor-pointer ${item.color} p-10 rounded-2xl shadow-md hover:shadow-xl transition-all transform hover:scale-105 flex flex-col items-center justify-center text-center`}
+          >
+            <div className="mb-4">{item.icon}</div>
+            <h2 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-white">
+              {item.title}
+            </h2>
+            <p className="text-gray-700 dark:text-gray-300 max-w-xs">
+              {item.description}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );
