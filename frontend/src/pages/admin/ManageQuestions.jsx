@@ -5,9 +5,15 @@ import toast, { Toaster } from "react-hot-toast";
 export default function ManageQuestions() {
   const [questions, setQuestions] = useState([]);
   const [editingId, setEditingId] = useState(null);
-  const [editedQuestion, setEditedQuestion] = useState({});
+  const [editedQuestion, setEditedQuestion] = useState({
+    text: "",
+    category: "",
+    options: [],
+    correctAnswerId: "",
+    correctAnswerText: "",
+  });
 
-  // ✅ Fetch admin's questions
+  // Fetch questions on mount
   useEffect(() => {
     fetchQuestions();
   }, []);
@@ -15,51 +21,85 @@ export default function ManageQuestions() {
   const fetchQuestions = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:3000/api/question/my-questions",
+        "http://localhost:3000/api/question/get-questions",
         { withCredentials: true }
       );
-      setQuestions(res.data.questions || []);
+      setQuestions(res.data.data || []);
     } catch (err) {
-      console.error("Error fetching questions:", err);
+      console.error(err);
       toast.error("Failed to fetch questions");
     }
   };
 
-  // ✅ Start editing
+  // Start editing
   const handleEdit = (q) => {
     setEditingId(q._id);
-    setEditedQuestion({ ...q });
+
+    // Find correct option text by _id
+    const correctOption = q.options.find(
+      (opt) => opt._id.toString() === q.correctAnswer
+    );
+
+    setEditedQuestion({
+      text: q.text,
+      category: q.category,
+      options: q.options.map((opt) => ({ ...opt })), // clone options
+      correctAnswerId: q.correctAnswer,
+      correctAnswerText: correctOption?.text || "",
+    });
   };
 
-  // ✅ Save edited question
+  // Update option text while editing
+  const handleOptionChange = (index, value) => {
+    const newOptions = [...editedQuestion.options];
+    newOptions[index].text = value;
+    setEditedQuestion((prev) => ({ ...prev, options: newOptions }));
+  };
+
+  // Save edited question
   const handleSave = async (id) => {
     try {
+      // Find option whose text matches correctAnswerText
+      const selectedOption = editedQuestion.options.find(
+        (opt) =>
+          opt.text.trim().toLowerCase() ===
+          editedQuestion.correctAnswerText.trim().toLowerCase()
+      );
+
+      const updatedData = {
+        text: editedQuestion.text,
+        category: editedQuestion.category,
+        options: editedQuestion.options,
+        correctAnswer:
+          selectedOption?._id.toString() || editedQuestion.correctAnswerId,
+      };
+
       await axios.put(
         `http://localhost:3000/api/question/update/${id}`,
-        editedQuestion,
+        updatedData,
         { withCredentials: true }
       );
+
       toast.success("✅ Question updated");
       setEditingId(null);
       fetchQuestions();
     } catch (err) {
-      console.error("Error updating question:", err);
+      console.error(err);
       toast.error("Failed to update question");
     }
   };
 
-  // ✅ Delete question
+  // Delete question
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this question?")) return;
     try {
-      await axios.delete(
-        `http://localhost:3000/api/question/delete/${id}`,
-        { withCredentials: true }
-      );
+      await axios.delete(`http://localhost:3000/api/question/delete/${id}`, {
+        withCredentials: true,
+      });
       toast.success("🗑️ Question deleted");
       fetchQuestions();
     } catch (err) {
-      console.error("Error deleting question:", err);
+      console.error(err);
       toast.error("Failed to delete question");
     }
   };
@@ -78,6 +118,7 @@ export default function ManageQuestions() {
               <tr>
                 <th className="p-3 text-left">Question</th>
                 <th className="p-3 text-left">Category</th>
+                <th className="p-3 text-left">Options</th>
                 <th className="p-3 text-left">Correct Answer</th>
                 <th className="p-3 text-center">Actions</th>
               </tr>
@@ -88,16 +129,17 @@ export default function ManageQuestions() {
                   key={q._id}
                   className="border-t border-gray-300 hover:bg-gray-100"
                 >
+                  {/* Question */}
                   <td className="p-3">
                     {editingId === q._id ? (
                       <input
                         type="text"
                         value={editedQuestion.text}
                         onChange={(e) =>
-                          setEditedQuestion({
-                            ...editedQuestion,
+                          setEditedQuestion((prev) => ({
+                            ...prev,
                             text: e.target.value,
-                          })
+                          }))
                         }
                         className="border p-1 w-full rounded"
                       />
@@ -106,16 +148,17 @@ export default function ManageQuestions() {
                     )}
                   </td>
 
+                  {/* Category */}
                   <td className="p-3">
                     {editingId === q._id ? (
                       <input
                         type="text"
                         value={editedQuestion.category}
                         onChange={(e) =>
-                          setEditedQuestion({
-                            ...editedQuestion,
+                          setEditedQuestion((prev) => ({
+                            ...prev,
                             category: e.target.value,
-                          })
+                          }))
                         }
                         className="border p-1 w-full rounded"
                       />
@@ -124,24 +167,46 @@ export default function ManageQuestions() {
                     )}
                   </td>
 
+                  {/* Options */}
+                  <td className="p-3">
+                    {editingId === q._id
+                      ? editedQuestion.options.map((opt, idx) => (
+                          <input
+                            key={opt._id}
+                            type="text"
+                            value={opt.text}
+                            onChange={(e) =>
+                              handleOptionChange(idx, e.target.value)
+                            }
+                            className="border p-1 w-full rounded mb-1"
+                          />
+                        ))
+                      : q.options.map((opt) => (
+                          <div key={opt._id}>{opt.text}</div>
+                        ))}
+                  </td>
+                  {/* Correct Answer */}
                   <td className="p-3">
                     {editingId === q._id ? (
                       <input
                         type="text"
-                        value={editedQuestion.correctAnswer}
+                        value={editedQuestion.correctAnswerText}
                         onChange={(e) =>
-                          setEditedQuestion({
-                            ...editedQuestion,
-                            correctAnswer: e.target.value,
-                          })
+                          setEditedQuestion((prev) => ({
+                            ...prev,
+                            correctAnswerText: e.target.value,
+                          }))
                         }
                         className="border p-1 w-full rounded"
                       />
                     ) : (
-                      q.correctAnswer
+                      q.options.find(
+                        (opt) => opt?._id?.toString() === q.correctAnswer
+                      )?.text || ""
                     )}
                   </td>
 
+                  {/* Actions */}
                   <td className="p-3 text-center space-x-2">
                     {editingId === q._id ? (
                       <>

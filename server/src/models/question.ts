@@ -1,9 +1,13 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
+interface IOption {
+  text: string;
+}
+
 export interface IQuestion extends Document {
   text: string;
-  options: string[];
-  correctAnswer: string;
+  options: IOption[]; // ✅ FIXED: subdocuments, not string[]
+  correctAnswer: string; // stores _id of the correct option
   points: number;
   category:
     | "Physics"
@@ -13,7 +17,7 @@ export interface IQuestion extends Document {
     | "Zoology"
     | "Botany";
   roundId?: Types.ObjectId;
-  quizId?: Types.ObjectId; // ✅ prevent reuse across rounds of same quiz
+  quizId?: Types.ObjectId;
   media?: {
     type: "image" | "video" | "file" | null;
     url: string | null;
@@ -23,11 +27,15 @@ export interface IQuestion extends Document {
   adminId: mongoose.Types.ObjectId;
 }
 
+const OptionSchema = new Schema<IOption>({
+  text: { type: String, required: true },
+});
+
 const questionSchema = new Schema<IQuestion>(
   {
     text: { type: String, required: true },
-    options: [{ type: String, required: true }],
-    correctAnswer: { type: String, required: true },
+    options: { type: [OptionSchema], required: true }, // ✅ FIXED
+    correctAnswer: { type: String, required: true }, // stores option._id as string
     points: { type: Number, default: 0 },
     category: {
       type: String,
@@ -35,7 +43,7 @@ const questionSchema = new Schema<IQuestion>(
       required: true,
     },
     roundId: { type: Schema.Types.ObjectId, ref: "Round" },
-    quizId: { type: Schema.Types.ObjectId, ref: "Quiz" }, // ✅ track quiz usage
+    quizId: { type: Schema.Types.ObjectId, ref: "Quiz" },
     media: {
       type: {
         type: String,

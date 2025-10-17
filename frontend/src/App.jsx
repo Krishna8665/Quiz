@@ -12,6 +12,7 @@ import Teams from "./pages/admin/Team";
 import Rounds from "./pages/admin/Rounds";
 import Create from "./pages/admin/Create";
 import ManageQuestions from "./pages/admin/ManageQuestions";
+import ManageQuizMasters from "./pages/admin/ManageQuizMasters";
 
 function App() {
   return (
@@ -25,8 +26,12 @@ function App() {
 
       {/* Admin routes */}
       <Route path="/admin" element={<AdminLayout />}>
-        <Route path="dashboard" element={<ManageQuestions />} />
-        <Route path="/manage-questions" element={<Dashboard />} />
+        {/* Dashboard nested routes */}
+        <Route path="dashboard" element={<Dashboard />}>
+          <Route path="manage-questions" element={<ManageQuestions />} />
+          <Route path="manage-quizmasters" element={<ManageQuizMasters />} />
+        </Route>
+
         <Route path="teams" element={<Teams />} />
         <Route path="questions" element={<Questions />} />
         <Route path="rounds" element={<Rounds />} />

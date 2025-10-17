@@ -4,10 +4,11 @@ import { NavLink, Outlet } from "react-router-dom";
 export default function AdminLayout() {
   const menuItems = [
     { name: "Dashboard", path: "/admin/dashboard" },
+    //{ name: "Manage Questions", path: "/admin/manage-questions" },
     { name: "Teams", path: "/admin/teams" },
     { name: "Questions", path: "/admin/questions" },
-    { name: "create-Quizz", path: "/admin/rounds" },
-    { name: "Create Quiz-Master", path: "/admin/create" },
+    { name: "Rounds", path: "/admin/rounds" },
+    { name: "Create Quiz", path: "/admin/create" },
   ];
 
   return (
@@ -33,7 +34,8 @@ export default function AdminLayout() {
           left: 0,
         }}
       >
-        <h2 style={{ textAlign: "center", marginBottom: 30 }}>Admin</h2>
+        <h2 style={{ textAlign: "center", marginBottom: 30 }}>Admin Panel</h2>
+
         {menuItems.map((item) => (
           <NavLink
             key={item.name}
@@ -59,10 +61,9 @@ export default function AdminLayout() {
         style={{
           flex: 1,
           padding: "40px 60px",
-          background: "#3059ad",
+          background: "#f9fafb",
           minHeight: "100vh",
-          marginLeft: 220, // push content after sidebar
-          transition: "margin-left 0.3s ease",
+          marginLeft: 220,
         }}
       >
         <div
