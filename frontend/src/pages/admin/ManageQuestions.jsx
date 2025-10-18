@@ -13,7 +13,7 @@ export default function ManageQuestions() {
     correctAnswerText: "",
   });
 
-  // Fetch questions on mount
+  // 🟢 Fetch all questions on mount
   useEffect(() => {
     fetchQuestions();
   }, []);
@@ -31,35 +31,35 @@ export default function ManageQuestions() {
     }
   };
 
-  // Start editing
+  // 🟢 Start editing a question
   const handleEdit = (q) => {
     setEditingId(q._id);
 
-    // Find correct option text by _id
-    const correctOption = q.options.find(
-      (opt) => opt._id.toString() === q.correctAnswer
+    // Find the correct option text by matching _id
+    const correctOption = q.options?.find(
+      (opt) => opt?._id?.toString() === q.correctAnswer?.toString()
     );
 
     setEditedQuestion({
       text: q.text,
       category: q.category,
-      options: q.options.map((opt) => ({ ...opt })), // clone options
+      options: q.options ? q.options.map((opt) => ({ ...opt })) : [],
       correctAnswerId: q.correctAnswer,
       correctAnswerText: correctOption?.text || "",
     });
   };
 
-  // Update option text while editing
+  // 🟢 Update an option text while editing
   const handleOptionChange = (index, value) => {
     const newOptions = [...editedQuestion.options];
-    newOptions[index].text = value;
+    newOptions[index] = { ...newOptions[index], text: value };
     setEditedQuestion((prev) => ({ ...prev, options: newOptions }));
   };
 
-  // Save edited question
+  // 🟢 Save edited question to backend
   const handleSave = async (id) => {
     try {
-      // Find option whose text matches correctAnswerText
+      // Try to find selected correct option
       const selectedOption = editedQuestion.options.find(
         (opt) =>
           opt.text.trim().toLowerCase() ===
@@ -71,7 +71,7 @@ export default function ManageQuestions() {
         category: editedQuestion.category,
         options: editedQuestion.options,
         correctAnswer:
-          selectedOption?._id.toString() || editedQuestion.correctAnswerId,
+          selectedOption?._id?.toString() || editedQuestion.correctAnswerId,
       };
 
       await axios.put(
@@ -80,7 +80,7 @@ export default function ManageQuestions() {
         { withCredentials: true }
       );
 
-      toast.success("✅ Question updated");
+      toast.success("✅ Question updated successfully");
       setEditingId(null);
       fetchQuestions();
     } catch (err) {
@@ -89,7 +89,7 @@ export default function ManageQuestions() {
     }
   };
 
-  // Delete question
+  // 🟢 Delete question
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this question?")) return;
     try {
@@ -129,7 +129,7 @@ export default function ManageQuestions() {
                   key={q._id}
                   className="border-t border-gray-300 hover:bg-gray-100"
                 >
-                  {/* Question */}
+                  {/* 🟢 Question */}
                   <td className="p-3">
                     {editingId === q._id ? (
                       <input
@@ -148,7 +148,7 @@ export default function ManageQuestions() {
                     )}
                   </td>
 
-                  {/* Category */}
+                  {/* 🟢 Category */}
                   <td className="p-3">
                     {editingId === q._id ? (
                       <input
@@ -167,25 +167,37 @@ export default function ManageQuestions() {
                     )}
                   </td>
 
-                  {/* Options */}
+                  {/* 🟢 Options */}
                   <td className="p-3">
-                    {editingId === q._id
-                      ? editedQuestion.options.map((opt, idx) => (
-                          <input
-                            key={opt._id}
-                            type="text"
-                            value={opt.text}
-                            onChange={(e) =>
-                              handleOptionChange(idx, e.target.value)
-                            }
-                            className="border p-1 w-full rounded mb-1"
-                          />
-                        ))
-                      : q.options.map((opt) => (
-                          <div key={opt._id}>{opt.text}</div>
-                        ))}
+                    {editingId === q._id ? (
+                      editedQuestion.options.map((opt, idx) => (
+                        <input
+                          key={opt._id || idx}
+                          type="text"
+                          value={opt.text}
+                          onChange={(e) =>
+                            handleOptionChange(idx, e.target.value)
+                          }
+                          className="border p-1 w-full rounded mb-1"
+                        />
+                      ))
+                    ) : (
+                      q.options.map((opt, i) => (
+                        <div
+                          key={opt._id || i}
+                          className={
+                            q.correctAnswer === opt._id?.toString()
+                              ? "text-green-600 font-semibold"
+                              : ""
+                          }
+                        >
+                          {opt.text}
+                        </div>
+                      ))
+                    )}
                   </td>
-                  {/* Correct Answer */}
+
+                  {/* 🟢 Correct Answer */}
                   <td className="p-3">
                     {editingId === q._id ? (
                       <input
@@ -201,12 +213,13 @@ export default function ManageQuestions() {
                       />
                     ) : (
                       q.options.find(
-                        (opt) => opt?._id?.toString() === q.correctAnswer
-                      )?.text || ""
+                        (opt) =>
+                          opt?._id?.toString() === q.correctAnswer?.toString()
+                      )?.text || "-"
                     )}
                   </td>
 
-                  {/* Actions */}
+                  {/* 🟢 Actions */}
                   <td className="p-3 text-center space-x-2">
                     {editingId === q._id ? (
                       <>
