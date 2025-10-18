@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Question from "../models/question";
 import mongoose from "mongoose";
-import Quiz from "../models/createRounds"; // Make sure you have a Quiz model
+import Quiz from "../models/createRounds";
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; role?: string; email?: string };
@@ -14,7 +14,10 @@ interface AuthenticatedRequest extends Request {
 
 // Create a new question
 
-export const createQuestion = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+export const createQuestion = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
   try {
     const user = req.user;
     if (!user) return res.status(401).json({ message: "Unauthorized" });
@@ -32,11 +35,14 @@ export const createQuestion = async (req: AuthenticatedRequest, res: Response): 
 
     // Find correct option object
     const correctOption = optionsWithIds.find(
-      (opt:any) => opt.text.trim().toLowerCase() === correctAnswer.trim().toLowerCase()
+      (opt: any) =>
+        opt.text.trim().toLowerCase() === correctAnswer.trim().toLowerCase()
     );
 
     if (!correctOption)
-      return res.status(400).json({ message: "Correct answer must match one of the options" });
+      return res
+        .status(400)
+        .json({ message: "Correct answer must match one of the options" });
 
     let finalMedia = null;
     if (req.file) {
