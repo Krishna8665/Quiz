@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
-import Question from "../models/question";
 import mongoose from "mongoose";
-import Quiz from "../models/createRounds";
+import Question from "../models/question";
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; role?: string; email?: string };
@@ -12,37 +11,49 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-// Create a new question
-
-export const createQuestion = async (
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<Response> => {
+export const createQuestion = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
   try {
     const user = req.user;
     if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-    const { text, options, correctAnswer, points, category } = req.body;
-    if (!text || !options?.length || !correctAnswer || !category) {
+    let { text, options, correctAnswer, points, category } = req.body;
+
+    if (!text || !options || !correctAnswer || !category) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // Convert strings to objects with _id
-    const optionsWithIds = options.map((opt: string) => ({
+    // ✅ Handle case where options might be a string (from form-data)
+    if (typeof options === "string") {
+      try {
+        options = JSON.parse(options);
+      } catch {
+        // If not valid JSON, split by commas as fallback
+        options = options.split(",").map((opt: string) => opt.trim());
+      }
+    }
+
+    // ✅ Ensure options is an array
+    if (!Array.isArray(options) || options.length === 0) {
+      return res.status(400).json({ message: "Options must be an array" });
+    }
+
+    // ✅ Convert each option to object with _id
+    const optionsWithIds = options.map((opt: any) => ({
       _id: new mongoose.Types.ObjectId(),
-      text: opt,
+      text: typeof opt === "string" ? opt : opt.text,
     }));
 
-    // Find correct option object
+    // ✅ Find correct option
     const correctOption = optionsWithIds.find(
-      (opt: any) =>
+      (opt) =>
         opt.text.trim().toLowerCase() === correctAnswer.trim().toLowerCase()
     );
 
-    if (!correctOption)
+    if (!correctOption) {
       return res
         .status(400)
         .json({ message: "Correct answer must match one of the options" });
+    }
 
     let finalMedia = null;
     if (req.file) {
@@ -66,7 +77,7 @@ export const createQuestion = async (
     });
 
     await question.save();
-    return res.status(201).json(question);
+    return res.status(201).json({ success: true, question });
   } catch (err) {
     console.error("Error creating question:", err);
     return res.status(500).json({
@@ -75,6 +86,7 @@ export const createQuestion = async (
     });
   }
 };
+
 
 // // Create Quiz with rounds
 // export const createQuiz = async (

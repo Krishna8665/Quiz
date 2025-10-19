@@ -14,7 +14,7 @@ export default function QuestionForm() {
       { id: uuidv4(), text: "" },
     ],
     correctAnswer: "",
-    points: 0,
+    points: "",
     category: "",
   });
 
@@ -22,13 +22,13 @@ export default function QuestionForm() {
   const [preview, setPreview] = useState(null);
   const API_URL = "http://localhost:3000/api";
 
-  // 🟢 Handle field changes
+  // 🟢 Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🟢 Handle type change
+  // 🟢 Handle question type change
   const handleTypeChange = (e) => {
     const type = e.target.value;
     setFormData((prev) => ({
@@ -47,16 +47,17 @@ export default function QuestionForm() {
     }));
   };
 
-  // 🟢 Handle options change
+  // 🟢 Handle option input changes
   const handleOptionChange = (index, value) => {
     const newOptions = [...formData.options];
     newOptions[index].text = value;
     setFormData((prev) => ({ ...prev, options: newOptions }));
   };
 
-  // 🟢 Handle media
+  // 🟢 File upload
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
     setFile(selectedFile);
     setPreview(URL.createObjectURL(selectedFile));
   };
@@ -66,25 +67,30 @@ export default function QuestionForm() {
     setPreview(null);
   };
 
-  // 🟢 Submit question
+  // 🟢 Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const payload = new FormData();
       payload.append("text", formData.text);
+      payload.append("category", formData.category);
+      payload.append("points", formData.points);
+
+      // Backend expects options as array of objects → { text: string }
       payload.append(
         "options",
-        JSON.stringify(formData.options.map((opt) => opt.text))
+        JSON.stringify(formData.options.map((opt) => ({ text: opt.text })))
       );
 
+      // If multiple choice, correct answer must be one of the texts
       const correctAnswerValue =
         formData.type === "multiple-choice"
-          ? formData.correctAnswer
+          ? formData.options.find((o) => o.id === formData.correctAnswer)?.text ||
+            ""
           : formData.options[0].text;
 
       payload.append("correctAnswer", correctAnswerValue);
-      payload.append("points", formData.points.toString());
-      payload.append("category", formData.category);
 
       if (file) payload.append("media", file);
 
@@ -106,14 +112,16 @@ export default function QuestionForm() {
           { id: uuidv4(), text: "" },
         ],
         correctAnswer: "",
-        points: 0,
+        points: "",
         category: "",
       });
       setFile(null);
       setPreview(null);
     } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "❌ Failed to add question.");
+      console.error("Error creating question:", err);
+      toast.error(
+        err.response?.data?.message || "❌ Failed to add question. Try again."
+      );
     }
   };
 
@@ -144,12 +152,12 @@ export default function QuestionForm() {
         onSubmit={handleSubmit}
         style={{ display: "flex", flexDirection: "column", gap: 15 }}
       >
-        {/* Question Text */}
+        {/* Question text */}
         <textarea
           name="text"
           value={formData.text}
           onChange={handleChange}
-          placeholder="Question text"
+          placeholder="Enter your question..."
           required
           style={{
             padding: 12,
@@ -159,7 +167,7 @@ export default function QuestionForm() {
           }}
         />
 
-        {/* Type */}
+        {/* Question type */}
         <select
           value={formData.type}
           onChange={handleTypeChange}
@@ -191,15 +199,12 @@ export default function QuestionForm() {
           />
         ))}
 
-        {/* Correct Answer */}
+        {/* Correct answer selection */}
         {formData.type === "multiple-choice" ? (
           <select
             value={formData.correctAnswer}
             onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                correctAnswer: e.target.value,
-              }))
+              setFormData((prev) => ({ ...prev, correctAnswer: e.target.value }))
             }
             required
             style={{
@@ -238,6 +243,7 @@ export default function QuestionForm() {
           onChange={handleChange}
           placeholder="Points"
           required
+          min="1"
           style={{
             padding: 10,
             borderRadius: 6,
@@ -265,7 +271,7 @@ export default function QuestionForm() {
           ))}
         </select>
 
-        {/* File Upload */}
+        {/* File upload */}
         <input
           type="file"
           onChange={handleFileChange}
@@ -313,6 +319,7 @@ export default function QuestionForm() {
           </div>
         )}
 
+        {/* Submit */}
         <button
           type="submit"
           style={{
