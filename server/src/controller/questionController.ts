@@ -129,7 +129,6 @@ export const createQuestion = async (
 //   }
 // };
 
-// Get questions for the current admin
 export const getQuestions = async (
   req: AuthenticatedRequest,
   res: Response
@@ -160,7 +159,7 @@ export const getQuestions = async (
     });
   }
 };
-// 🟡 Update question
+// Update question
 export const updateQuestion = async (
   req: AuthenticatedRequest,
   res: Response
@@ -187,7 +186,7 @@ export const updateQuestion = async (
   }
 };
 
-// 🔴 Delete question
+// Delete question
 export const deleteQuestion = async (
   req: AuthenticatedRequest,
   res: Response
