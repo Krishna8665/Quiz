@@ -36,11 +36,11 @@ export default function AuthForm() {
             email: formData.email,
             password: formData.password,
           },
-          { withCredentials: true } // 👈 allows backend to set cookie
+          { withCredentials: true } //  allows backend to set cookie
         );
 
         setMessage("Login successful!");
-        navigate("/admin"); // 👈 redirect to round creation page
+        navigate("/admin/dashboard"); //  redirect to round creation page
       }
     } catch (err) {
       setMessage(
