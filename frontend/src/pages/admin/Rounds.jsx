@@ -23,7 +23,7 @@ export default function CreateQuiz() {
     },
   ]);
 
-  // ✅ Fetch Teams
+  //  Fetch Teams
   useEffect(() => {
     const fetchTeams = async () => {
       try {
