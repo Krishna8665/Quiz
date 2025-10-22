@@ -120,7 +120,7 @@ export default function CreateQuiz() {
     );
   };
 
-  // ✅ Handle Team Selection
+  //  Handle Team Selection
   const handleTeamSelect = (teamId) => {
     setSelectedTeams((prev) => {
       const alreadySelected = prev.includes(teamId);
