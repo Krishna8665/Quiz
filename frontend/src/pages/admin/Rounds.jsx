@@ -39,7 +39,7 @@ export default function CreateQuiz() {
     fetchTeams();
   }, []);
 
-  // ✅ Fetch Questions
+  //  Fetch Questions
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -56,7 +56,7 @@ export default function CreateQuiz() {
     fetchQuestions();
   }, []);
 
-  // ✅ Handle Rounds Count
+  //  Handle Rounds Count
   const handleNumRoundsChange = (e) => {
     const count = Math.max(1, parseInt(e.target.value) || 1);
     setNumRounds(count);
@@ -76,7 +76,7 @@ export default function CreateQuiz() {
     });
   };
 
-  // ✅ Handle Question Selection
+  //  Handle Question Selection
   const handleQuestionSelect = (roundIndex, questionId) => {
     setRounds((prevRounds) => {
       const newRounds = structuredClone(prevRounds);
