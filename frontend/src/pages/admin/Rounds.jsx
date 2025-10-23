@@ -103,7 +103,7 @@ export default function CreateQuiz() {
     );
   };
 
-  // ✅ Handle Rules (only one active)
+  //  Handle Rules (only one active)
   const handleRuleChange = (index, rule) => {
     setRounds((prev) =>
       prev.map((r, i) =>
