@@ -13,7 +13,7 @@ export default function ManageQuestions() {
     correctAnswerText: "",
   });
 
-  // 🟢 Fetch all questions on mount
+  // Fetch all questions on mount
   useEffect(() => {
     fetchQuestions();
   }, []);
@@ -31,7 +31,7 @@ export default function ManageQuestions() {
     }
   };
 
-  // 🟢 Start editing a question
+  //  Start editing a question
   const handleEdit = (q) => {
     setEditingId(q._id);
 
@@ -49,14 +49,14 @@ export default function ManageQuestions() {
     });
   };
 
-  // 🟢 Update an option text while editing
+  //  Update an option text while editing
   const handleOptionChange = (index, value) => {
     const newOptions = [...editedQuestion.options];
     newOptions[index] = { ...newOptions[index], text: value };
     setEditedQuestion((prev) => ({ ...prev, options: newOptions }));
   };
 
-  // 🟢 Save edited question to backend
+  //  Save edited question to backend
   const handleSave = async (id) => {
     try {
       // Try to find selected correct option
@@ -89,7 +89,7 @@ export default function ManageQuestions() {
     }
   };
 
-  // 🟢 Delete question
+  //  Delete question
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this question?")) return;
     try {
