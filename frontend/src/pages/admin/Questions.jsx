@@ -22,13 +22,13 @@ export default function QuestionForm() {
   const [preview, setPreview] = useState(null);
   const API_URL = "http://localhost:3000/api";
 
-  // 🟢 Handle form changes
+  //  Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // 🟢 Handle question type change
+  //  Handle question type change
   const handleTypeChange = (e) => {
     const type = e.target.value;
     setFormData((prev) => ({
@@ -47,14 +47,14 @@ export default function QuestionForm() {
     }));
   };
 
-  // 🟢 Handle option input changes
+  //  Handle option input changes
   const handleOptionChange = (index, value) => {
     const newOptions = [...formData.options];
     newOptions[index].text = value;
     setFormData((prev) => ({ ...prev, options: newOptions }));
   };
 
-  // 🟢 File upload
+  //  File upload
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
@@ -67,7 +67,7 @@ export default function QuestionForm() {
     setPreview(null);
   };
 
-  // 🟢 Submit handler
+  // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
