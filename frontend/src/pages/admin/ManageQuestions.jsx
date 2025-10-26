@@ -129,7 +129,7 @@ export default function ManageQuestions() {
                   key={q._id}
                   className="border-t border-gray-300 hover:bg-gray-100"
                 >
-                  {/* 🟢 Question */}
+                  {/*  Question */}
                   <td className="p-3">
                     {editingId === q._id ? (
                       <input
@@ -148,7 +148,7 @@ export default function ManageQuestions() {
                     )}
                   </td>
 
-                  {/* 🟢 Category */}
+                  {/*  Category */}
                   <td className="p-3">
                     {editingId === q._id ? (
                       <input
@@ -167,7 +167,7 @@ export default function ManageQuestions() {
                     )}
                   </td>
 
-                  {/* 🟢 Options */}
+                  {/* Options */}
                   <td className="p-3">
                     {editingId === q._id ? (
                       editedQuestion.options.map((opt, idx) => (
@@ -197,7 +197,7 @@ export default function ManageQuestions() {
                     )}
                   </td>
 
-                  {/* 🟢 Correct Answer */}
+                  {/*  Correct Answer */}
                   <td className="p-3">
                     {editingId === q._id ? (
                       <input
