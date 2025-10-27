@@ -219,7 +219,7 @@ export default function ManageQuestions() {
                     )}
                   </td>
 
-                  {/* 🟢 Actions */}
+                  {/*  Actions */}
                   <td className="p-3 text-center space-x-2">
                     {editingId === q._id ? (
                       <>
