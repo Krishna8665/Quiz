@@ -14,7 +14,7 @@ interface RoundInput {
     enablePass?: boolean;
     enableNegative?: boolean;
   };
-  questions?: (string | Types.ObjectId)[]; // ✅ accept both ObjectId or string
+  questions?: (string | Types.ObjectId)[]; //  accept both ObjectId or string
 }
 
 interface QuizInput {
