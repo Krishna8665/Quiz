@@ -18,6 +18,7 @@ export default function CreateQuiz() {
       timeLimitType: "perQuestion",
       timeLimitValue: 30,
       category: "general round",
+      points: 0, // 
       rules: { enablePass: false, enableNegative: false },
       questions: [],
     },
@@ -56,7 +57,7 @@ export default function CreateQuiz() {
     fetchQuestions();
   }, []);
 
-  //  Handle Rounds Count
+  //  Handle Number of Rounds
   const handleNumRoundsChange = (e) => {
     const count = Math.max(1, parseInt(e.target.value) || 1);
     setNumRounds(count);
@@ -68,6 +69,7 @@ export default function CreateQuiz() {
           timeLimitType: "perQuestion",
           timeLimitValue: 30,
           category: "general round",
+          points: 0,
           rules: { enablePass: false, enableNegative: false },
           questions: [],
         });
@@ -96,14 +98,14 @@ export default function CreateQuiz() {
     });
   };
 
-  // ✅ Handle Round Change
+  //  Handle Round Field Change (including points)
   const handleRoundChange = (index, field, value) => {
     setRounds((prev) =>
       prev.map((r, i) => (i === index ? { ...r, [field]: value } : r))
     );
   };
 
-  //  Handle Rules (only one active)
+  //  Handle Rules
   const handleRuleChange = (index, rule) => {
     setRounds((prev) =>
       prev.map((r, i) =>
@@ -124,12 +126,9 @@ export default function CreateQuiz() {
   const handleTeamSelect = (teamId) => {
     setSelectedTeams((prev) => {
       const alreadySelected = prev.includes(teamId);
-
       if (alreadySelected) {
-        // Deselect team
         return prev.filter((id) => id !== teamId);
       } else {
-        // Don’t allow more than numTeams
         if (prev.length >= numTeams) {
           toast.error(`You can only select ${numTeams} team(s).`);
           return prev;
@@ -139,7 +138,7 @@ export default function CreateQuiz() {
     });
   };
 
-  // ✅ Submit Quiz
+  //  Submit Quiz
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -157,6 +156,7 @@ export default function CreateQuiz() {
         category: r.category,
         timeLimitType: r.timeLimitType,
         timeLimitValue: Number(r.timeLimitValue),
+        points: Number(r.points), 
         rules: r.rules,
         questions: r.questions,
       })),
@@ -178,6 +178,7 @@ export default function CreateQuiz() {
           timeLimitType: "perQuestion",
           timeLimitValue: 30,
           category: "general round",
+          points: 0,
           rules: { enablePass: false, enableNegative: false },
           questions: [],
         },
@@ -387,6 +388,26 @@ export default function CreateQuiz() {
               }}
             />
 
+            {/* 🟢 Points per Round */}
+            <label style={{ color: "black" }}>Points:</label>
+            <input
+              type="number"
+              value={round.points}
+              onChange={(e) =>
+                handleRoundChange(index, "points", e.target.value)
+              }
+              required
+              min="0"
+              placeholder="Enter points for this round"
+              style={{
+                padding: 10,
+                borderRadius: 6,
+                border: "1px solid #ccc",
+                width: "100%",
+                marginBottom: 10,
+              }}
+            />
+
             {/* Rules */}
             <label style={{ color: "black", fontWeight: "bold" }}>Rules:</label>
             <div style={{ marginBottom: 10 }}>
@@ -413,7 +434,7 @@ export default function CreateQuiz() {
               </label>
             </div>
 
-            {/* Question Selection */}
+            {/* Questions */}
             <label style={{ color: "black" }}>Select Questions:</label>
             <div
               style={{
@@ -453,6 +474,7 @@ export default function CreateQuiz() {
           </div>
         ))}
 
+        {/* Submit */}
         <button
           type="submit"
           style={{

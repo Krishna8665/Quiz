@@ -8,7 +8,7 @@ export interface IQuestion extends Document {
   text: string;
   options: IOption[]; // ✅ FIXED: subdocuments, not string[]
   correctAnswer: string; // stores _id of the correct option
-  points: number;
+  //points: number;
   category:
     | "Physics"
     | "Maths"
@@ -36,7 +36,7 @@ const questionSchema = new Schema<IQuestion>(
     text: { type: String, required: true },
     options: { type: [OptionSchema], required: true }, // ✅ FIXED
     correctAnswer: { type: String, required: true }, // stores option._id as string
-    points: { type: Number, default: 0 },
+    //points: { type: Number, default: 0 },
     category: {
       type: String,
       enum: ["Physics", "Maths", "Chemistry", "Biology", "Zoology", "Botany"],

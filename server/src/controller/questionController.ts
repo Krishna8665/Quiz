@@ -16,7 +16,7 @@ export const createQuestion = async (req: AuthenticatedRequest, res: Response): 
     const user = req.user;
     if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-    let { text, options, correctAnswer, points, category } = req.body;
+    let { text, options, correctAnswer, category } = req.body;
 
     if (!text || !options || !correctAnswer || !category) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -70,7 +70,7 @@ export const createQuestion = async (req: AuthenticatedRequest, res: Response): 
       text,
       options: optionsWithIds,
       correctAnswer: correctOption._id.toString(),
-      points,
+      
       category,
       media: finalMedia,
       adminId: user.id,

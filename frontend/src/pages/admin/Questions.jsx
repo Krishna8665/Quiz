@@ -75,7 +75,7 @@ export default function QuestionForm() {
       const payload = new FormData();
       payload.append("text", formData.text);
       payload.append("category", formData.category);
-      payload.append("points", formData.points);
+      //payload.append("points", formData.points);
 
       // Backend expects options as array of objects → { text: string }
       payload.append(
@@ -86,8 +86,8 @@ export default function QuestionForm() {
       // If multiple choice, correct answer must be one of the texts
       const correctAnswerValue =
         formData.type === "multiple-choice"
-          ? formData.options.find((o) => o.id === formData.correctAnswer)?.text ||
-            ""
+          ? formData.options.find((o) => o.id === formData.correctAnswer)
+              ?.text || ""
           : formData.options[0].text;
 
       payload.append("correctAnswer", correctAnswerValue);
@@ -112,7 +112,7 @@ export default function QuestionForm() {
           { id: uuidv4(), text: "" },
         ],
         correctAnswer: "",
-        points: "",
+        //points: "",
         category: "",
       });
       setFile(null);
@@ -136,21 +136,46 @@ export default function QuestionForm() {
 
   return (
     <div
-      style={{
-        maxWidth: 700,
-        margin: "50px auto",
-        padding: 30,
-        background: "#fff",
-        borderRadius: 10,
-        boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-      }}
+    // style={{
+
+    // margin: "0px auto",
+    // padding: 0,
+    // background: "#fff",
+    // borderRadius: 0,
+
+    // }}
     >
       <Toaster position="top-center" />
-      <h2 style={{ textAlign: "center", color: "black" }}>Add Question</h2>
+      <h2
+        style={{
+          textAlign: "center",
+          color: "black",
+          fontWeight: "bold",
+          fontSize: 40,
+          textDecorationLine: "underline",
+          padding: "0px",
+          margin: "0px",
+          marginTop: "0px",
+          marginBottom: "5px",
+        }}
+      >
+        ADD QUESTION
+      </h2>
 
       <form
         onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: 15 }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 5,
+          maxWidth: 800,
+          margin: "5px auto",
+          padding: 20,
+          background: "#fff",
+          borderRadius: 100,
+          boxShadow: "0 40px 50px rgba(0,0,0,0.5)",
+          alignContent: "center",
+        }}
       >
         {/* Question text */}
         <textarea
@@ -160,10 +185,16 @@ export default function QuestionForm() {
           placeholder="Enter your question..."
           required
           style={{
-            padding: 12,
+            padding: 7,
             borderRadius: 6,
-            border: "1px solid #ccc",
+            border: "2px solid black",
             fontSize: 16,
+            margin: "20px auto", // centers horizontally
+            //width: 800, // more reasonable than 1400px
+            maxWidth: "90%",
+            //margin: 10,
+            width: 800,
+            alignContent: "center",
           }}
         />
 
@@ -172,9 +203,15 @@ export default function QuestionForm() {
           value={formData.type}
           onChange={handleTypeChange}
           style={{
-            padding: 10,
+            display: "block",
+            padding: 7,
             borderRadius: 6,
-            border: "1px solid #ccc",
+            border: "2px solid black",
+            fontSize: 16,
+            margin: "5px auto",
+            width: 800,
+            maxWidth: "90%",
+            alignContent: "center",
           }}
         >
           <option value="multiple-choice">Multiple Choice</option>
@@ -191,10 +228,15 @@ export default function QuestionForm() {
             placeholder={`Option ${idx + 1}`}
             required
             style={{
-              padding: 10,
+              display: "block",
+              padding: 7,
               borderRadius: 6,
-              border: "1px solid #ccc",
+              border: "2px solid black",
               fontSize: 16,
+              margin: "5px auto",
+              width: 800,
+              maxWidth: "90%",
+              alignContent: "center",
             }}
           />
         ))}
@@ -204,13 +246,22 @@ export default function QuestionForm() {
           <select
             value={formData.correctAnswer}
             onChange={(e) =>
-              setFormData((prev) => ({ ...prev, correctAnswer: e.target.value }))
+              setFormData((prev) => ({
+                ...prev,
+                correctAnswer: e.target.value,
+              }))
             }
             required
             style={{
-              padding: 10,
+              display: "block",
+              padding: 7,
               borderRadius: 6,
-              border: "1px solid #ccc",
+              border: "2px solid black",
+              fontSize: 16,
+              margin: "5px auto",
+              width: 800,
+              maxWidth: "90%",
+              alignContent: "center",
             }}
           >
             <option value="">Select Correct Option</option>
@@ -228,14 +279,20 @@ export default function QuestionForm() {
             onChange={(e) => handleOptionChange(0, e.target.value)}
             required
             style={{
-              padding: 10,
+              display: "block",
+              padding: 7,
               borderRadius: 6,
-              border: "1px solid #ccc",
+              border: "2px solid black",
+              fontSize: 16,
+              margin: "5px auto",
+              width: 800,
+              maxWidth: "90%",
+              alignContent: "center",
             }}
           />
         )}
 
-        {/* Points */}
+        {/* Points
         <input
           type="number"
           name="points"
@@ -249,7 +306,7 @@ export default function QuestionForm() {
             borderRadius: 6,
             border: "1px solid #ccc",
           }}
-        />
+        /> */}
 
         {/* Category */}
         <select
@@ -258,9 +315,15 @@ export default function QuestionForm() {
           onChange={handleChange}
           required
           style={{
-            padding: 10,
+            display: "block",
+            padding: 7,
             borderRadius: 6,
-            border: "1px solid #ccc",
+            border: "2px solid black",
+            fontSize: 16,
+            margin: "5px auto",
+            width: 800,
+            maxWidth: "90%",
+            alignContent: "center",
           }}
         >
           <option value="">Select Category</option>
@@ -277,9 +340,15 @@ export default function QuestionForm() {
           onChange={handleFileChange}
           accept="image/*,video/*"
           style={{
-            padding: 10,
+            display: "block",
+            padding: 7,
             borderRadius: 6,
-            border: "1px solid #ccc",
+            border: "2px solid black",
+            fontSize: 16,
+            margin: "5px auto",
+            width: 800,
+            maxWidth: "90%",
+            alignContent: "center",
           }}
         />
 
@@ -323,12 +392,17 @@ export default function QuestionForm() {
         <button
           type="submit"
           style={{
-            padding: 12,
-            borderRadius: 8,
+            display: "block",
+            padding: 7,
+            borderRadius: 6,
             border: "none",
+            fontSize: 16,
+            margin: "5px auto",
+            width: 800,
+            maxWidth: "90%",
+            alignContent: "center",
             background: "#007bff",
             color: "#fff",
-            fontSize: 16,
             cursor: "pointer",
           }}
         >

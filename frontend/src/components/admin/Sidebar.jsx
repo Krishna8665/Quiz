@@ -3,12 +3,12 @@ import { NavLink, Outlet } from "react-router-dom";
 
 export default function AdminLayout() {
   const menuItems = [
-    { name: "Dashboard", path: "/admin/dashboard" },
+    { name: "DASHBOARD", path: "/admin/dashboard" },
     //{ name: "Manage Questions", path: "/admin/manage-questions" },
-    { name: "Teams", path: "/admin/teams" },
-    { name: "Questions", path: "/admin/questions" },
-    { name: "Rounds", path: "/admin/rounds" },
-    { name: "Create Quiz", path: "/admin/create" },
+    { name: "ADD TEAMS", path: "/admin/teams" },
+    { name: "Add QUESTION", path: "/admin/questions" },
+    { name: "CREATE QUIZ", path: "/admin/rounds" },
+    { name: "CREATE QUIZ MASTER", path: "/admin/create" },
   ];
 
   return (
@@ -22,7 +22,7 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <div
         style={{
-          width: 220,
+          width: 280,
           background: "#1f2937",
           color: "#fff",
           display: "flex",
@@ -32,9 +32,20 @@ export default function AdminLayout() {
           top: 0,
           bottom: 0,
           left: 0,
+          backgroundColor: "black",
         }}
       >
-        <h2 style={{ textAlign: "center", marginBottom: 30 }}>Admin Panel</h2>
+        <h2
+          style={{
+            textAlign: "center",
+            marginBottom: 30,
+            fontSize: 35,
+            textDecorationLine: "underline",
+            fontWeight:"bold"
+          }}
+        >
+          ADMIN PANEL
+        </h2>
 
         {menuItems.map((item) => (
           <NavLink
@@ -67,13 +78,13 @@ export default function AdminLayout() {
         }}
       >
         <div
-          style={{
-            background: "#fff",
-            borderRadius: "12px",
-            padding: "30px",
-            minHeight: "80vh",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-          }}
+        // style={{
+        //   background: "#fff",
+        //   borderRadius: "12px",
+        //   padding: "30px",
+        //   minHeight: "80vh",
+        //   boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+        // }}
         >
           <Outlet />
         </div>
