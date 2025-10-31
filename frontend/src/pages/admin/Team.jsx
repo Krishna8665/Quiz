@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 
-export default function Team() {
+export default function Teams() {
   const [teamName, setTeamName] = useState("");
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -50,9 +50,9 @@ export default function Team() {
   // Remove team
   const handleRemove = async (id) => {
     try {
-      await axiosInstance.delete(
-        `/team/teams/${id}`, { withCredentials: true }
-      );
+      await axiosInstance.delete(`/team/teams/${id}`, {
+        withCredentials: true,
+      });
       setTeams((prev) => prev.filter((t) => t._id !== id));
     } catch (err) {
       console.error(

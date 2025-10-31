@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import toast, { Toaster } from "react-hot-toast";
+import "../styles/question.css"
 
 export default function QuestionForm() {
   const [formData, setFormData] = useState({
@@ -14,7 +15,6 @@ export default function QuestionForm() {
       { id: uuidv4(), text: "" },
     ],
     correctAnswer: "",
-    points: "",
     category: "",
   });
 
@@ -22,13 +22,11 @@ export default function QuestionForm() {
   const [preview, setPreview] = useState(null);
   const API_URL = "http://localhost:3000/api";
 
-  //  Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  //  Handle question type change
   const handleTypeChange = (e) => {
     const type = e.target.value;
     setFormData((prev) => ({
@@ -47,14 +45,12 @@ export default function QuestionForm() {
     }));
   };
 
-  //  Handle option input changes
   const handleOptionChange = (index, value) => {
     const newOptions = [...formData.options];
     newOptions[index].text = value;
     setFormData((prev) => ({ ...prev, options: newOptions }));
   };
 
-  //  File upload
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
@@ -67,7 +63,6 @@ export default function QuestionForm() {
     setPreview(null);
   };
 
-  // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -75,15 +70,12 @@ export default function QuestionForm() {
       const payload = new FormData();
       payload.append("text", formData.text);
       payload.append("category", formData.category);
-      //payload.append("points", formData.points);
 
-      // Backend expects options as array of objects → { text: string }
       payload.append(
         "options",
         JSON.stringify(formData.options.map((opt) => ({ text: opt.text })))
       );
 
-      // If multiple choice, correct answer must be one of the texts
       const correctAnswerValue =
         formData.type === "multiple-choice"
           ? formData.options.find((o) => o.id === formData.correctAnswer)
@@ -91,7 +83,6 @@ export default function QuestionForm() {
           : formData.options[0].text;
 
       payload.append("correctAnswer", correctAnswerValue);
-
       if (file) payload.append("media", file);
 
       await axios.post(`${API_URL}/question/create-question`, payload, {
@@ -101,7 +92,6 @@ export default function QuestionForm() {
 
       toast.success("✅ Question added successfully!");
 
-      // Reset form
       setFormData({
         text: "",
         type: "multiple-choice",
@@ -112,7 +102,6 @@ export default function QuestionForm() {
           { id: uuidv4(), text: "" },
         ],
         correctAnswer: "",
-        //points: "",
         category: "",
       });
       setFile(null);
@@ -135,90 +124,29 @@ export default function QuestionForm() {
   ];
 
   return (
-    <div
-    // style={{
-
-    // margin: "0px auto",
-    // padding: 0,
-    // background: "#fff",
-    // borderRadius: 0,
-
-    // }}
-    >
+    <div className="question-form-container">
       <Toaster position="top-center" />
-      <h2
-        style={{
-          textAlign: "center",
-          color: "black",
-          fontWeight: "bold",
-          fontSize: 40,
-          textDecorationLine: "underline",
-          padding: "0px",
-          margin: "0px",
-          marginTop: "0px",
-          marginBottom: "5px",
-        }}
-      >
-        ADD QUESTION
-      </h2>
+      <h2 className="form-title">ADD QUESTION</h2>
 
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 5,
-          maxWidth: 800,
-          margin: "5px auto",
-          padding: 20,
-          background: "#fff",
-          borderRadius: 100,
-          boxShadow: "0 40px 50px rgba(0,0,0,0.5)",
-          alignContent: "center",
-        }}
-      >
-        {/* Question text */}
+      <form onSubmit={handleSubmit} className="question-form">
         <textarea
           name="text"
           value={formData.text}
           onChange={handleChange}
           placeholder="Enter your question..."
           required
-          style={{
-            padding: 7,
-            borderRadius: 6,
-            border: "2px solid black",
-            fontSize: 16,
-            margin: "20px auto", // centers horizontally
-            //width: 800, // more reasonable than 1400px
-            maxWidth: "90%",
-            //margin: 10,
-            width: 800,
-            alignContent: "center",
-          }}
+          className="form-textarea"
         />
 
-        {/* Question type */}
         <select
           value={formData.type}
           onChange={handleTypeChange}
-          style={{
-            display: "block",
-            padding: 7,
-            borderRadius: 6,
-            border: "2px solid black",
-            fontSize: 16,
-            margin: "5px auto",
-            width: 800,
-            maxWidth: "90%",
-            alignContent: "center",
-          }}
+          className="form-select"
         >
           <option value="multiple-choice">Multiple Choice</option>
           <option value="short-answer">Short Answer</option>
         </select>
 
-        {/* Options */}
         {formData.options.map((opt, idx) => (
           <input
             key={opt.id}
@@ -227,21 +155,10 @@ export default function QuestionForm() {
             onChange={(e) => handleOptionChange(idx, e.target.value)}
             placeholder={`Option ${idx + 1}`}
             required
-            style={{
-              display: "block",
-              padding: 7,
-              borderRadius: 6,
-              border: "2px solid black",
-              fontSize: 16,
-              margin: "5px auto",
-              width: 800,
-              maxWidth: "90%",
-              alignContent: "center",
-            }}
+            className="form-input"
           />
         ))}
 
-        {/* Correct answer selection */}
         {formData.type === "multiple-choice" ? (
           <select
             value={formData.correctAnswer}
@@ -252,17 +169,7 @@ export default function QuestionForm() {
               }))
             }
             required
-            style={{
-              display: "block",
-              padding: 7,
-              borderRadius: 6,
-              border: "2px solid black",
-              fontSize: 16,
-              margin: "5px auto",
-              width: 800,
-              maxWidth: "90%",
-              alignContent: "center",
-            }}
+            className="form-select"
           >
             <option value="">Select Correct Option</option>
             {formData.options.map((opt) => (
@@ -278,53 +185,16 @@ export default function QuestionForm() {
             value={formData.options[0].text}
             onChange={(e) => handleOptionChange(0, e.target.value)}
             required
-            style={{
-              display: "block",
-              padding: 7,
-              borderRadius: 6,
-              border: "2px solid black",
-              fontSize: 16,
-              margin: "5px auto",
-              width: 800,
-              maxWidth: "90%",
-              alignContent: "center",
-            }}
+            className="form-input"
           />
         )}
 
-        {/* Points
-        <input
-          type="number"
-          name="points"
-          value={formData.points}
-          onChange={handleChange}
-          placeholder="Points"
-          required
-          min="1"
-          style={{
-            padding: 10,
-            borderRadius: 6,
-            border: "1px solid #ccc",
-          }}
-        /> */}
-
-        {/* Category */}
         <select
           name="category"
           value={formData.category}
           onChange={handleChange}
           required
-          style={{
-            display: "block",
-            padding: 7,
-            borderRadius: 6,
-            border: "2px solid black",
-            fontSize: 16,
-            margin: "5px auto",
-            width: 800,
-            maxWidth: "90%",
-            alignContent: "center",
-          }}
+          className="form-select"
         >
           <option value="">Select Category</option>
           {categories.map((cat) => (
@@ -334,78 +204,31 @@ export default function QuestionForm() {
           ))}
         </select>
 
-        {/* File upload */}
         <input
           type="file"
           onChange={handleFileChange}
           accept="image/*,video/*"
-          style={{
-            display: "block",
-            padding: 7,
-            borderRadius: 6,
-            border: "2px solid black",
-            fontSize: 16,
-            margin: "5px auto",
-            width: 800,
-            maxWidth: "90%",
-            alignContent: "center",
-          }}
+          className="form-file"
         />
 
         {preview && (
-          <div style={{ position: "relative", display: "inline-block" }}>
+          <div className="preview-container">
             {file?.type.startsWith("image") ? (
-              <img
-                src={preview}
-                alt="Preview"
-                style={{ maxWidth: 200, borderRadius: 6 }}
-              />
+              <img src={preview} alt="Preview" className="preview-media" />
             ) : (
-              <video
-                src={preview}
-                controls
-                style={{ maxWidth: 200, borderRadius: 6 }}
-              />
+              <video src={preview} controls className="preview-media" />
             )}
             <button
               type="button"
               onClick={handleFileRemove}
-              style={{
-                position: "absolute",
-                top: -10,
-                right: -10,
-                background: "red",
-                color: "white",
-                border: "none",
-                borderRadius: "50%",
-                width: 25,
-                height: 25,
-                cursor: "pointer",
-              }}
+              className="remove-btn"
             >
               ×
             </button>
           </div>
         )}
 
-        {/* Submit */}
-        <button
-          type="submit"
-          style={{
-            display: "block",
-            padding: 7,
-            borderRadius: 6,
-            border: "none",
-            fontSize: 16,
-            margin: "5px auto",
-            width: 800,
-            maxWidth: "90%",
-            alignContent: "center",
-            background: "#007bff",
-            color: "#fff",
-            cursor: "pointer",
-          }}
-        >
+        <button type="submit" className="submit-btn">
           Add Question
         </button>
       </form>

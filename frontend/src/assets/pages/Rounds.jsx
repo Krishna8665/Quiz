@@ -6,25 +6,23 @@ export default function CreateQuiz() {
   const [teams, setTeams] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [usedQuestions, setUsedQuestions] = useState([]);
-
   const [selectedTeams, setSelectedTeams] = useState([]);
   const [numTeams, setNumTeams] = useState(1);
   const [numRounds, setNumRounds] = useState(1);
   const [quizName, setQuizName] = useState("");
-
   const [rounds, setRounds] = useState([
     {
       name: "",
       timeLimitType: "perQuestion",
       timeLimitValue: 30,
       category: "general round",
-      points: 0, // 
+      points: 0,
       rules: { enablePass: false, enableNegative: false },
       questions: [],
     },
   ]);
 
-  //  Fetch Teams
+  // Fetch Teams
   useEffect(() => {
     const fetchTeams = async () => {
       try {
@@ -40,7 +38,7 @@ export default function CreateQuiz() {
     fetchTeams();
   }, []);
 
-  //  Fetch Questions
+  // Fetch Questions
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -57,7 +55,64 @@ export default function CreateQuiz() {
     fetchQuestions();
   }, []);
 
-  //  Handle Number of Rounds
+  // Handle Team Selection
+  const handleTeamSelect = (teamId) => {
+    setSelectedTeams((prev) => {
+      const alreadySelected = prev.includes(teamId);
+      if (alreadySelected) return prev.filter((id) => id !== teamId);
+      if (prev.length >= numTeams) {
+        toast.error(`You can only select ${numTeams} team(s).`);
+        return prev;
+      }
+      return [...prev, teamId];
+    });
+  };
+
+  // Handle Question Selection
+  const handleQuestionSelect = (roundIndex, questionId) => {
+    setRounds((prevRounds) => {
+      const newRounds = structuredClone(prevRounds);
+      const round = newRounds[roundIndex];
+      const isSelected = round.questions.includes(questionId);
+
+      if (isSelected) {
+        round.questions = round.questions.filter((id) => id !== questionId);
+        setUsedQuestions((prev) => prev.filter((id) => id !== questionId));
+      } else {
+        round.questions.push(questionId);
+        setUsedQuestions((prev) => [...prev, questionId]);
+      }
+
+      newRounds[roundIndex] = round;
+      return newRounds;
+    });
+  };
+
+  // Handle Round Field Change
+  const handleRoundChange = (index, field, value) => {
+    setRounds((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, [field]: value } : r))
+    );
+  };
+
+  // Handle Rule Change
+  const handleRuleChange = (index, rule) => {
+    setRounds((prev) =>
+      prev.map((r, i) =>
+        i === index
+          ? {
+              ...r,
+              rules: {
+                enablePass: rule === "enablePass",
+                enableNegative: rule === "enableNegative",
+              },
+            }
+          : r
+      )
+    );
+  };
+
+  // Handle Number of Rounds
   const handleNumRoundsChange = (e) => {
     const count = Math.max(1, parseInt(e.target.value) || 1);
     setNumRounds(count);
@@ -78,67 +133,7 @@ export default function CreateQuiz() {
     });
   };
 
-  //  Handle Question Selection
-  const handleQuestionSelect = (roundIndex, questionId) => {
-    setRounds((prevRounds) => {
-      const newRounds = structuredClone(prevRounds);
-      const round = newRounds[roundIndex];
-      const isSelected = round.questions.includes(questionId);
-
-      if (isSelected) {
-        round.questions = round.questions.filter((id) => id !== questionId);
-        setUsedQuestions((prev) => prev.filter((id) => id !== questionId));
-      } else {
-        round.questions.push(questionId);
-        setUsedQuestions((prev) => [...prev, questionId]);
-      }
-
-      newRounds[roundIndex] = round;
-      return newRounds;
-    });
-  };
-
-  //  Handle Round Field Change (including points)
-  const handleRoundChange = (index, field, value) => {
-    setRounds((prev) =>
-      prev.map((r, i) => (i === index ? { ...r, [field]: value } : r))
-    );
-  };
-
-  //  Handle Rules
-  const handleRuleChange = (index, rule) => {
-    setRounds((prev) =>
-      prev.map((r, i) =>
-        i === index
-          ? {
-              ...r,
-              rules: {
-                enablePass: rule === "enablePass",
-                enableNegative: rule === "enableNegative",
-              },
-            }
-          : r
-      )
-    );
-  };
-
-  //  Handle Team Selection
-  const handleTeamSelect = (teamId) => {
-    setSelectedTeams((prev) => {
-      const alreadySelected = prev.includes(teamId);
-      if (alreadySelected) {
-        return prev.filter((id) => id !== teamId);
-      } else {
-        if (prev.length >= numTeams) {
-          toast.error(`You can only select ${numTeams} team(s).`);
-          return prev;
-        }
-        return [...prev, teamId];
-      }
-    });
-  };
-
-  //  Submit Quiz
+  // Submit Quiz
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -156,7 +151,7 @@ export default function CreateQuiz() {
         category: r.category,
         timeLimitType: r.timeLimitType,
         timeLimitValue: Number(r.timeLimitValue),
-        points: Number(r.points), 
+        points: Number(r.points),
         rules: r.rules,
         questions: r.questions,
       })),
@@ -189,6 +184,38 @@ export default function CreateQuiz() {
       toast.error(err.response?.data?.message || "❌ Failed to create quiz");
     }
   };
+
+  // Custom Checkbox Span
+  const Checkbox = ({ checked }) => (
+    <span
+      style={{
+        width: 20,
+        height: 20,
+        border: "1px solid #000",
+        display: "inline-block",
+        marginRight: 8,
+        backgroundColor: checked ? "green" : "#fff",
+        borderRadius: 4,
+        position: "relative",
+      }}
+    >
+      {checked && (
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          style={{
+            position: "absolute",
+            top: 2,
+            left: 2,
+            fill: "white",
+          }}
+        >
+          <path d="M20.285 6.709l-11.025 11.025-5.545-5.545 1.414-1.414 4.131 4.131 9.611-9.611z" />
+        </svg>
+      )}
+    </span>
+  );
 
   return (
     <div
@@ -251,32 +278,33 @@ export default function CreateQuiz() {
             marginBottom: 20,
           }}
         >
-          {teams.map((team) => (
-            <label
-              key={team._id}
-              style={{
-                display: "block",
-                opacity:
-                  !selectedTeams.includes(team._id) &&
-                  selectedTeams.length >= numTeams
-                    ? 0.5
-                    : 1,
-                color: "black",
-              }}
-            >
-              <input
-                type="checkbox"
-                disabled={
-                  !selectedTeams.includes(team._id) &&
-                  selectedTeams.length >= numTeams
-                }
-                checked={selectedTeams.includes(team._id)}
-                onChange={() => handleTeamSelect(team._id)}
-                style={{ marginRight: 8 }}
-              />
-              {team.teamName || team.name}
-            </label>
-          ))}
+          {teams.map((team) => {
+            const disabled =
+              !selectedTeams.includes(team._id) && selectedTeams.length >= numTeams;
+            const checked = selectedTeams.includes(team._id);
+            return (
+              <label
+                key={team._id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  opacity: disabled ? 0.5 : 1,
+                  marginBottom: 5,
+                  cursor: disabled ? "not-allowed" : "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  disabled={disabled}
+                  checked={checked}
+                  onChange={() => handleTeamSelect(team._id)}
+                  style={{ display: "none" }}
+                />
+                <Checkbox checked={checked} />
+                {team.teamName || team.name}
+              </label>
+            );
+          })}
         </div>
 
         {/* Number of Rounds */}
@@ -314,9 +342,7 @@ export default function CreateQuiz() {
             <input
               type="text"
               value={round.name}
-              onChange={(e) =>
-                handleRoundChange(index, "name", e.target.value)
-              }
+              onChange={(e) => handleRoundChange(index, "name", e.target.value)}
               required
               placeholder="Enter round name"
               style={{
@@ -388,7 +414,7 @@ export default function CreateQuiz() {
               }}
             />
 
-            {/* 🟢 Points per Round */}
+            {/* Points */}
             <label style={{ color: "black" }}>Points:</label>
             <input
               type="number"
@@ -450,22 +476,26 @@ export default function CreateQuiz() {
                 const isUsed =
                   usedQuestions.includes(q._id) &&
                   !round.questions.includes(q._id);
+                const checked = round.questions.includes(q._id);
                 return (
                   <label
                     key={q._id}
                     style={{
-                      display: "block",
+                      display: "flex",
+                      alignItems: "center",
                       opacity: isUsed ? 0.5 : 1,
-                      color: "black",
+                      marginBottom: 5,
+                      cursor: isUsed ? "not-allowed" : "pointer",
                     }}
                   >
                     <input
                       type="checkbox"
                       disabled={isUsed}
-                      checked={round.questions.includes(q._id)}
+                      checked={checked}
                       onChange={() => handleQuestionSelect(index, q._id)}
-                      style={{ marginRight: 8 }}
+                      style={{ display: "none" }}
                     />
+                    <Checkbox checked={checked} />
                     {q.text}
                   </label>
                 );
@@ -474,7 +504,6 @@ export default function CreateQuiz() {
           </div>
         ))}
 
-        {/* Submit */}
         <button
           type="submit"
           style={{
