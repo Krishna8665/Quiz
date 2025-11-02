@@ -76,7 +76,7 @@ button {
 
 /* Media preview */
 .preview-container {
-  position: relative;
+  position: fixed;
   display: inline-block;
   margin: 10px auto;
 }

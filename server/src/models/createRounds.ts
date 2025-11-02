@@ -15,7 +15,6 @@ export interface IRound extends Document {
     enablePass: boolean;
     enableNegative: boolean;
   };
-  quizId?: Types.ObjectId;
   questions: mongoose.Types.ObjectId[];
   adminId: Types.ObjectId | string;
 }
@@ -45,7 +44,7 @@ const RoundSchema = new Schema<IRound>(
       enablePass: { type: Boolean, default: false },
       enableNegative: { type: Boolean, default: false },
     },
-    quizId: { type: Schema.Types.ObjectId, ref: "Quiz" },
+
     questions: [{ type: Schema.Types.ObjectId, ref: "Question", default: [] }],
     adminId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },

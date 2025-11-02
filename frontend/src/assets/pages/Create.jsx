@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import "../../assets/styles/AdminCreateUser.css"; 
 
 export default function AdminCreateUser() {
   const [formData, setFormData] = useState({
@@ -17,17 +18,13 @@ export default function AdminCreateUser() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      const token = localStorage.getItem("token"); // admin token stored on login
-
+      const token = localStorage.getItem("token");
       const res = await axios.post(
         "http://localhost:3000/api/auth/admin/register",
         formData,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -40,45 +37,18 @@ export default function AdminCreateUser() {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: 1000,
-        margin: "50px auto",
-        padding: "180px",
-        backgroundColor: "#f9f9f9ff",
-        borderRadius: "22px",
-        boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-      }}
-    >
-      <h2
-        style={{
-          color: "black",
-          textAlign: "center",
-          marginBottom: "20px",
-          fontWeight: 700,
-          fontSize: "28x",
-        }}
-      >
-        Create Quiz-Master
-      </h2>
+    <div className="create-user-container">
+      <h2 className="create-user-title">Create Quiz-Master</h2>
 
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: "15px" }}
-      >
+      <form className="create-user-form" onSubmit={handleSubmit}>
         <input
           type="text"
           name="name"
           value={formData.name}
           onChange={handleChange}
           placeholder="Full Name"
+          className="create-user-input"
           required
-          style={{
-            padding: "12px",
-            fontSize: "16px",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-          }}
         />
 
         <input
@@ -87,13 +57,8 @@ export default function AdminCreateUser() {
           value={formData.email}
           onChange={handleChange}
           placeholder="Email Address"
+          className="create-user-input"
           required
-          style={{
-            padding: "12px",
-            fontSize: "16px",
-            borderRadius: "8px",
-            border: "1px solid #fcfbfbff",
-          }}
         />
 
         <input
@@ -102,28 +67,11 @@ export default function AdminCreateUser() {
           value={formData.password}
           onChange={handleChange}
           placeholder="Password"
+          className="create-user-input"
           required
-          style={{
-            padding: "12px",
-            fontSize: "16px",
-            borderRadius: "8px",
-            border: "1px solid #fbf9f9ff",
-          }}
         />
 
-        <button
-          type="submit"
-          style={{
-            padding: "14px",
-            fontSize: "16px",
-            borderRadius: "8px",
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
+        <button type="submit" className="create-user-button">
           Create User
         </button>
       </form>

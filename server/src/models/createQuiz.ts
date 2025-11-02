@@ -15,7 +15,7 @@ export interface IQuiz extends Document {
 const quizSchema = new Schema<IQuiz>(
   {
     name: { type: String, required: true },
-    adminId: { type: Schema.Types.ObjectId, ref: "Admin", required: true },
+    adminId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     rounds: [{ type: Schema.Types.ObjectId, ref: "Round", required: true }],
     teams: [{ type: Schema.Types.ObjectId, ref: "Team", required: true }],
     numTeams: { type: Number, default: 1 },

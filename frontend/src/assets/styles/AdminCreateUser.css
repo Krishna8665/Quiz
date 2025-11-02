@@ -1,0 +1,55 @@
+/* AdminCreateUser.css */
+
+.create-user-container {
+  max-width: 600px;
+  margin: 60px auto;
+  padding: 40px;
+  background-color: #f9f9f9ff;
+  border-radius: 20px;
+  box-shadow: 0 20px 30px rgba(0.5, 0.5, 0.5, 0.5);
+}
+
+.create-user-title {
+  color: black;
+  text-align: center;
+  margin-bottom: 25px;
+  font-weight: 700;
+  font-size: 28px;
+  font-family: "Poppins", sans-serif;
+}
+
+.create-user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.create-user-input {
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #0f0e0e;
+  transition: border-color 0.2s ease-in-out;
+}
+
+.create-user-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+.create-user-button {
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 8px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.create-user-button:hover {
+  background-color: #0056b3;
+}

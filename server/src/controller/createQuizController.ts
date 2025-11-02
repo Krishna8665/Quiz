@@ -28,37 +28,34 @@ interface QuizInput {
 export const createQuiz = async (req: AuthRequest, res: Response) => {
   try {
     const adminId = req.user?.id;
-    if (!adminId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
 
     const { name, rounds, teams } = req.body as QuizInput;
-
-    if (!name || !rounds?.length || !teams?.length) {
+    if (!name || !rounds?.length || !teams?.length)
       return res.status(400).json({ message: "Missing required fields" });
+
+    // ✅ Validate team names are unique within this quiz only
+    const teamNames = teams.map((t) => t.name.trim().toLowerCase());
+    if (new Set(teamNames).size !== teamNames.length) {
+      return res.status(400).json({ message: "Team names must be unique within this quiz" });
     }
 
-    // ✅ Step 1: Create teams with default points 0
+    // ✅ Step 1: Create teams
     const createdTeams = await Team.insertMany(
       teams.map((t) => ({
         name: t.name,
-        points: 0, // default points for teams
+        points: 0,
         adminId,
       }))
     );
 
-    // ✅ Step 2: Create rounds and ensure no reused questions
+    // ✅ Step 2: Create rounds and prevent reused questions
     const usedQuestionIds: string[] = [];
     const createdRounds = [];
 
     for (const r of rounds) {
-      const duplicate = r.questions?.some((qId: string) =>
-        usedQuestionIds.includes(qId)
-      );
-      if (duplicate) {
-        return res
-          .status(400)
-          .json({ message: "A question is being reused across rounds." });
+      if (r.questions?.some((qId) => usedQuestionIds.includes(qId))) {
+        return res.status(400).json({ message: "A question is being reused across rounds." });
       }
 
       if (r.questions) usedQuestionIds.push(...r.questions);
@@ -68,7 +65,7 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
         category: r.category,
         timeLimitType: r.timeLimitType,
         timeLimitValue: r.timeLimitValue,
-        points: r.points || 0, // points for round scoring
+        points: r.points || 0,
         adminId,
         rules: {
           enablePass: r.rules?.enablePass ?? false,
@@ -77,91 +74,66 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
         questions: r.questions || [],
       });
 
-      // Mark those questions as used in that round
+      // Mark questions as used in that round
       if (r.questions?.length) {
-        await Question.updateMany(
-          { _id: { $in: r.questions } },
-          { $set: { roundId: round._id } }
-        );
+        await Question.updateMany({ _id: { $in: r.questions } }, { $set: { roundId: round._id } });
       }
 
       createdRounds.push(round);
     }
 
-    // ✅ Step 3: Create quiz referencing both rounds and teams
+    // ✅ Step 3: Create quiz referencing rounds and teams
     const quiz = await Quiz.create({
       name,
       adminId,
       rounds: createdRounds.map((r) => r._id),
       teams: createdTeams.map((t) => t._id),
       numTeams: createdTeams.length,
+      numRounds: createdRounds.length,
     });
 
-    res.status(201).json({
-      message: "✅ Quiz created successfully",
-      quiz,
-    });
+    res.status(201).json({ message: "Quiz created successfully", quiz });
   } catch (error: any) {
     console.error("Error creating quiz:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 export const getQuiz = async (req: AuthRequest, res: Response) => {
   try {
-    const adminId = req.user?.id || req.user?.id;
-    if (!adminId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    const adminId = req.user?.id;
+    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
 
-    // Find all quizzes created by the admin and populate related data
-    const quiz = await Quiz.find({ adminId })
-      .populate("rounds")
-      .populate("teams");
-
-    if (!quiz.length) {
-      return res.status(200).json({ message: "No quiz found", quiz: [] });
-    }
+    const quizzes = await Quiz.find({ adminId }).populate("rounds").populate("teams");
 
     return res.status(200).json({
-      message: "Quizzes fetched successfully",
-      quiz,
+      message: quizzes.length ? "Quizzes fetched successfully" : "No quiz found",
+      quiz: quizzes,
     });
   } catch (error: any) {
     console.error("Error fetching quiz:", error.message);
-    return res.status(500).json({
-      message: error.message || "Internal server error",
-    });
+    return res.status(500).json({ message: error.message || "Internal server error" });
   }
 };
 
-
 export const deleteQuiz = async (req: AuthRequest, res: Response) => {
   try {
-    const adminId = req.user?.id || req.user?.id;
-    if (!adminId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    const adminId = req.user?.id;
+    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
 
     const { id } = req.params;
-
     const quiz = await Quiz.findOne({ _id: id, adminId });
-    if (!quiz) {
-      return res.status(404).json({ message: "Quiz not found" });
-    }
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
-    // Delete related rounds first (optional but cleaner)
+    // Delete related rounds
     await Round.deleteMany({ _id: { $in: quiz.rounds } });
 
-    // Delete the quiz
+    // Delete quiz
     await Quiz.findByIdAndDelete(id);
 
-    return res.status(200).json({
-      message: "Quiz and related rounds deleted successfully",
-    });
+    return res.status(200).json({ message: "Quiz and related rounds deleted successfully" });
   } catch (error: any) {
     console.error("Error deleting quiz:", error.message);
-    return res.status(500).json({
-      message: error.message || "Internal server error",
-    });
+    return res.status(500).json({ message: error.message || "Internal server error" });
   }
 };

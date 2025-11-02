@@ -3,6 +3,7 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function CreateQuiz() {
+  const [step, setStep] = useState(1); // Step state
   const [quizName, setQuizName] = useState("");
   const [teams, setTeams] = useState([{ name: "" }]);
   const [numRounds, setNumRounds] = useState(1);
@@ -21,8 +22,8 @@ export default function CreateQuiz() {
   const [usedQuestions, setUsedQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch Questions from database
-useEffect(() => {
+  // Fetch questions
+  useEffect(() => {
     const fetchQuestions = async () => {
       try {
         const res = await axios.get(
@@ -31,13 +32,14 @@ useEffect(() => {
         );
         setQuestions(res.data.data || []);
       } catch (err) {
-        console.error("Error fetching questions:", err);
+        console.error(err);
         toast.error("Failed to fetch questions");
       }
     };
     fetchQuestions();
   }, []);
-  // Handle Team Changes
+
+  // Team handlers
   const addTeam = () => setTeams([...teams, { name: "" }]);
   const removeTeam = (i) => setTeams(teams.filter((_, index) => index !== i));
   const handleTeamChange = (i, value) => {
@@ -46,7 +48,7 @@ useEffect(() => {
     setTeams(updated);
   };
 
-  // Handle Rounds changes
+  // Round handlers
   const handleNumRoundsChange = (e) => {
     const count = Math.max(1, parseInt(e.target.value) || 1);
     setNumRounds(count);
@@ -83,20 +85,17 @@ useEffect(() => {
     setRounds(updated);
   };
 
-  // Handle question selection with no duplicate in other rounds
+  // Question selection
   const handleQuestionSelect = (roundIndex, questionId) => {
     const updatedRounds = [...rounds];
     const round = updatedRounds[roundIndex];
 
     if (round.questions.includes(questionId)) {
-      // Deselect question
       round.questions = round.questions.filter((id) => id !== questionId);
     } else {
-      // Select question
       round.questions.push(questionId);
     }
 
-    // Update all used questions across rounds
     const allSelected = updatedRounds.flatMap((r) => r.questions);
     setUsedQuestions(allSelected);
 
@@ -104,7 +103,7 @@ useEffect(() => {
     setRounds(updatedRounds);
   };
 
-  // Custom Checkbox component
+  // Custom checkbox
   const Checkbox = ({ checked }) => (
     <span
       style={{
@@ -131,18 +130,47 @@ useEffect(() => {
     </span>
   );
 
-  // Submit Quiz
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Submit
+  const handleSubmit = async () => {
+    // Quiz name validation
+    if (!quizName.trim()) return toast.error("Please enter quiz name");
 
-    if (!quizName.trim()) {
-      toast.error("Please enter quiz name");
-      return;
-    }
+    // Team names validation
+    if (teams.some((t) => !t.name.trim()))
+      return toast.error("All teams must have a name");
+    // Team names uniqueness validation
+    // const teamNames = teams.map((t) => t.name.trim().toLowerCase());
+    // const uniqueTeamNames = new Set(teamNames);
+    // if (uniqueTeamNames.size !== teamNames.length) {
+    //   return toast.error("Team names must be unique within the quiz");
+    // }
 
-    if (teams.some((t) => !t.name.trim())) {
-      toast.error("All teams must have a name");
-      return;
+    // Rounds validation
+    for (let i = 0; i < rounds.length; i++) {
+      const round = rounds[i];
+
+      if (!round.name.trim())
+        return toast.error(`Please enter a name for Round ${i + 1}`);
+
+      if (!round.category)
+        return toast.error(`Select category for Round ${i + 1}`);
+
+      if (!round.timeLimitType)
+        return toast.error(`Select time limit type for Round ${i + 1}`);
+
+      if (!round.timeLimitValue || round.timeLimitValue <= 0)
+        return toast.error(`Enter a valid time limit for Round ${i + 1}`);
+
+      if (round.points === "" || round.points < 0)
+        return toast.error(`Enter valid points for Round ${i + 1}`);
+      // Rules validation: at least one must be enabled
+      if (!round.rules.enablePass && !round.rules.enableNegative)
+        return toast.error(
+          `Please enable at least one rule for Round ${i + 1}`
+        );
+
+      if (!round.questions || round.questions.length === 0)
+        return toast.error(`Select at least one question for Round ${i + 1}`);
     }
 
     try {
@@ -152,8 +180,10 @@ useEffect(() => {
         { name: quizName, teams, rounds },
         { withCredentials: true }
       );
-
       toast.success("✅ Quiz created successfully!");
+
+      // Reset all data
+      setStep(1);
       setQuizName("");
       setTeams([{ name: "" }]);
       setNumRounds(1);
@@ -189,285 +219,423 @@ useEffect(() => {
       }}
     >
       <Toaster position="top-center" />
-      <h2 style={{ textAlign: "center", color: "black" }}>Create Quiz</h2>
+      <h1 style={{ textAlign: "center", fontWeight: "bold", fontSize: "28px" }}>
+        🧠 Create New Quiz
+      </h1>
 
-      <form onSubmit={handleSubmit}>
-        {/* Quiz Name */}
-        <label style={{ color: "black" }}>Quiz Name:</label>
-        <input
-          type="text"
-          value={quizName}
-          onChange={(e) => setQuizName(e.target.value)}
-          required
-          style={{
-            padding: 10,
-            borderRadius: 6,
-            border: "1px solid #ccc",
-            width: "100%",
-            marginBottom: 20,
-          }}
-        />
-
-        {/* Teams */}
-        <label style={{ color: "black" }}>Teams:</label>
-        {teams.map((team, index) => (
+      {/* Step-wise navigation */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: 20,
+        }}
+      >
+        {[1, 2, 3].map((s) => (
           <div
-            key={index}
-            style={{ display: "flex", alignItems: "center", marginBottom: 10 }}
+            key={s}
+            style={{
+              width: "30%",
+              textAlign: "center",
+              padding: 8,
+              borderRadius: 6,
+              background: step === s ? "#28a745" : "#ccc",
+              color: "#fff",
+              cursor: "pointer",
+            }}
+            onClick={() => setStep(s)}
           >
-            <input
-              type="text"
-              placeholder={`Team ${index + 1} Name`}
-              value={team.name}
-              onChange={(e) => handleTeamChange(index, e.target.value)}
-              style={{
-                flex: 1,
-                padding: 10,
-                borderRadius: 6,
-                border: "1px solid #ccc",
-              }}
-            />
-            {teams.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeTeam(index)}
-                style={{
-                  marginLeft: 8,
-                  padding: "6px 10px",
-                  background: "red",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                }}
-              >
-                ✕
-              </button>
-            )}
+            Step {s}
           </div>
         ))}
-        <button
-          type="button"
-          onClick={addTeam}
-          style={{
-            marginBottom: 20,
-            background: "#007bff",
-            color: "#fff",
-            border: "none",
-            padding: "8px 12px",
-            borderRadius: 6,
-            cursor: "pointer",
-          }}
-        >
-          ➕ Add Team
-        </button>
+      </div>
 
-        {/* Number of Rounds */}
-        <label style={{ color: "black" }}>Number of Rounds:</label>
-        <input
-          type="number"
-          min="1"
-          value={numRounds}
-          onChange={handleNumRoundsChange}
-          style={{
-            padding: 10,
-            borderRadius: 6,
-            border: "1px solid #ccc",
-            width: "100%",
-            marginBottom: 20,
-          }}
-        />
-
-        {/* Round Details */}
-        {rounds.map((round, index) => (
-          <div
-            key={index}
+      {/* Step 1: Quiz Name */}
+      {step === 1 && (
+        <div>
+          {/* Quiz Info Section */}
+          <section
             style={{
-              border: "1px solid #ddd",
-              borderRadius: 8,
-              padding: 15,
-              marginBottom: 20,
-              background: "#fafafa",
+              background: "#f8f9fa",
+              padding: 20,
+              borderRadius: 10,
+              marginTop: 25,
             }}
           >
-            <h3 style={{ color: "black" }}>Round {index + 1}</h3>
-
-            <label style={{ color: "black" }}>Name:</label>
+            <h3
+              style={{
+                textAlign: "center",
+                fontWeight: "bold",
+                fontSize: "28px",
+              }}
+            >
+              🎯 Quiz Info
+            </h3>
+            <label style={{ color: "black" }}>Quiz Name:</label>
             <input
               type="text"
-              value={round.name}
-              onChange={(e) => handleRoundChange(index, "name", e.target.value)}
+              value={quizName}
+              onChange={(e) => setQuizName(e.target.value)}
               style={{
-                width: "100%",
                 padding: 10,
                 borderRadius: 6,
                 border: "1px solid #ccc",
-                marginBottom: 10,
+                width: "100%",
+                marginBottom: 20,
               }}
             />
+          </section>
+          <button
+            type="button"
+            onClick={() => setStep(2)}
+            style={{
+              padding: 10,
+              borderRadius: 6,
+              background: "#28a745",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Next
+          </button>
+        </div>
+      )}
 
-            <label style={{ color: "black" }}>Category:</label>
-            <select
-              value={round.category}
-              onChange={(e) =>
-                handleRoundChange(index, "category", e.target.value)
-              }
-              style={{
-                width: "100%",
-                padding: 10,
-                borderRadius: 6,
-                border: "1px solid #ccc",
-                marginBottom: 10,
-              }}
-            >
-              <option value="general round">General Round</option>
-              <option value="subject round">Subject Round</option>
-              <option value="estimation round">Estimation Round</option>
-              <option value="rapid fire round">Rapid Fire Round</option>
-              <option value="buzzer round">Buzzer Round</option>
-            </select>
-
-            <label style={{ color: "black" }}>Time Limit Type:</label>
-            <select
-              value={round.timeLimitType}
-              onChange={(e) =>
-                handleRoundChange(index, "timeLimitType", e.target.value)
-              }
-              style={{
-                width: "100%",
-                padding: 10,
-                borderRadius: 6,
-                border: "1px solid #ccc",
-                marginBottom: 10,
-              }}
-            >
-              <option value="perQuestion">Per Question</option>
-              <option value="perRound">Per Round</option>
-            </select>
-
-            <label style={{ color: "black" }}>Time Limit (seconds):</label>
-            <input
-              type="number"
-              value={round.timeLimitValue}
-              min="1"
-              onChange={(e) =>
-                handleRoundChange(index, "timeLimitValue", e.target.value)
-              }
-              style={{
-                width: "100%",
-                padding: 10,
-                borderRadius: 6,
-                border: "1px solid #ccc",
-                marginBottom: 10,
-              }}
-            />
-
-            <label style={{ color: "black" }}>Points:</label>
-            <input
-              type="number"
-              value={round.points}
-              min="0"
-              onChange={(e) =>
-                handleRoundChange(index, "points", e.target.value)
-              }
-              style={{
-                width: "100%",
-                padding: 10,
-                borderRadius: 6,
-                border: "1px solid #ccc",
-                marginBottom: 10,
-              }}
-            />
-
-            {/* Rules */}
-            <label style={{ color: "black", fontWeight: "bold" }}>Rules:</label>
-            <div style={{ marginBottom: 10 }}>
-              <label style={{ color: "black" }}>
-                <input
-                  type="radio"
-                  name={`rule-${index}`}
-                  checked={round.rules.enablePass}
-                  onChange={() => handleRuleChange(index, "enablePass")}
-                  style={{ marginRight: 8 }}
-                />
-                Enable Pass
-              </label>
-              <br />
-              <label style={{ color: "black" }}>
-                <input
-                  type="radio"
-                  name={`rule-${index}`}
-                  checked={round.rules.enableNegative}
-                  onChange={() => handleRuleChange(index, "enableNegative")}
-                  style={{ marginRight: 8 }}
-                />
-                Enable Negative Points
-              </label>
-            </div>
-
-            {/* Questions */}
-            <label style={{ color: "black" }}>Select Questions:</label>
+      {/* Step 2: Teams */}
+      {step === 2 && (
+        <div>
+          <label style={{ color: "black" }}>👥Teams:</label>
+          {teams.map((team, index) => (
             <div
+              key={index}
               style={{
-                maxHeight: 150,
-                overflowY: "auto",
-                border: "1px solid #ddd",
-                borderRadius: 6,
-                padding: 10,
-                background: "#f9f9f9",
+                display: "flex",
+                alignItems: "center",
+                marginBottom: 10,
               }}
             >
-              {questions.map((q) => {
-                const selectedInOtherRound =
-                  usedQuestions.includes(q._id) &&
-                  !round.questions.includes(q._id);
-                const checked = round.questions.includes(q._id);
+              <input
+                type="text"
+                placeholder={`Team ${index + 1} Name`}
+                value={team.name}
+                onChange={(e) => handleTeamChange(index, e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: 10,
+                  borderRadius: 6,
+                  border: "1px solid #ccc",
+                }}
+              />
+              {teams.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeTeam(index)}
+                  style={{
+                    marginLeft: 8,
+                    padding: "6px 10px",
+                    background: "red",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addTeam}
+            style={{
+              marginBottom: 20,
+              background: "#007bff",
+              color: "#fff",
+              border: "none",
+              padding: "8px 12px",
+              borderRadius: 6,
+              cursor: "pointer",
+            }}
+          >
+            ➕ Add Team
+          </button>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              style={{ padding: 10, borderRadius: 70 }}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep(3)}
+              style={{
+                padding: 10,
+                borderRadius: 6,
+                background: "#28a745",
+                color: "#fff",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
-                return (
+      {/* Step 3: Rounds */}
+      {step === 3 && (
+        <div>
+          {/* Number of rounds */}
+          <label style={{ color: "black" }}>🔄Number of Rounds:</label>
+          <input
+            type="number"
+            min="1"
+            value={numRounds}
+            onChange={handleNumRoundsChange}
+            style={{
+              padding: 10,
+              borderRadius: 6,
+              border: "1px solid #ccc",
+              width: "100%",
+              marginBottom: 20,
+            }}
+          />
+
+          {/* Round details */}
+          {rounds.map((round, index) => (
+            <div
+              key={index}
+              style={{
+                border: "1px solid #ddd",
+                borderRadius: 8,
+                padding: 15,
+                marginBottom: 20,
+                background: "#fafafa",
+              }}
+            >
+              <h3
+                style={{
+                  color: "black",
+                  alignItems: "center",
+                  marginBottom: 10,
+                }}
+              >
+                🏆 Round {index + 1}
+              </h3>
+
+              <label style={{ color: "black" }}>Name:</label>
+              <input
+                type="text"
+                value={round.name}
+                onChange={(e) =>
+                  handleRoundChange(index, "name", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: 10,
+                  borderRadius: 6,
+                  border: "1px solid #ccc",
+                  marginBottom: 10,
+                }}
+              />
+
+              <label style={{ color: "black" }}>Category:</label>
+              <select
+                value={round.category}
+                onChange={(e) =>
+                  handleRoundChange(index, "category", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: 10,
+                  borderRadius: 6,
+                  border: "1px solid #ccc",
+                  marginBottom: 10,
+                }}
+              >
+                <option value="general round">General Round</option>
+                <option value="subject round">Subject Round</option>
+                <option value="estimation round">Estimation Round</option>
+                <option value="rapid fire round">Rapid Fire Round</option>
+                <option value="buzzer round">Buzzer Round</option>
+              </select>
+
+              <label style={{ color: "black" }}>Time Limit Type:</label>
+              <select
+                value={round.timeLimitType}
+                onChange={(e) =>
+                  handleRoundChange(index, "timeLimitType", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: 10,
+                  borderRadius: 6,
+                  border: "1px solid #ccc",
+                  marginBottom: 10,
+                }}
+              >
+                <option value="perQuestion">Per Question</option>
+                <option value="perRound">Per Round</option>
+              </select>
+
+              <label style={{ color: "black" }}>Time Limit (seconds):</label>
+              <input
+                type="number"
+                value={round.timeLimitValue}
+                min="1"
+                onChange={(e) =>
+                  handleRoundChange(index, "timeLimitValue", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: 10,
+                  borderRadius: 6,
+                  border: "1px solid #ccc",
+                  marginBottom: 10,
+                }}
+              />
+
+              <label style={{ color: "black" }}>Points:</label>
+              <input
+                type="number"
+                value={round.points}
+                min="0"
+                onChange={(e) =>
+                  handleRoundChange(index, "points", e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: 10,
+                  borderRadius: 6,
+                  border: "1px solid #ccc",
+                  marginBottom: 10,
+                }}
+              />
+
+              {/* Rules */}
+              <label style={{ color: "black", fontWeight: "bold" }}>
+                Rules:
+              </label>
+              <div style={{ marginBottom: 10 }}>
+                {[
+                  { id: "enablePass", label: "Enable Pass" },
+                  { id: "enableNegative", label: "Enable Negative Points" },
+                ].map((rule) => (
                   <label
-                    key={q._id}
+                    key={rule.id}
                     style={{
+                      color: "black",
                       display: "flex",
                       alignItems: "center",
-                      opacity: selectedInOtherRound ? 0.5 : 1,
-                      marginBottom: 5,
-                      cursor: selectedInOtherRound ? "not-allowed" : "pointer",
+                      cursor: "pointer",
+                      marginBottom: 6,
                     }}
                   >
                     <input
-                      type="checkbox"
-                      disabled={selectedInOtherRound}
-                      checked={checked}
-                      onChange={() => handleQuestionSelect(index, q._id)}
-                      style={{ display: "none" }}
+                      type="radio"
+                      name={`rule-${index}`}
+                      checked={round.rules[rule.id]}
+                      onChange={() => handleRuleChange(index, rule.id)}
+                      style={{
+                        appearance: "none",
+                        WebkitAppearance: "none",
+                        MozAppearance: "none",
+                        width: 18,
+                        height: 18,
+                        border: "2px solid #28a745",
+                        borderRadius: "50%",
+                        cursor: "pointer",
+                        marginRight: 8,
+                        position: "relative",
+                        backgroundColor: round.rules[rule.id]
+                          ? "#28a745"
+                          : "transparent",
+                        transition: "background-color 0.2s ease",
+                      }}
                     />
-                    <Checkbox checked={checked} />
-                    {q.text}
+                    {rule.label}
                   </label>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+                ))}
+              </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: 12,
-            fontSize: 16,
-            fontWeight: 600,
-            color: "#fff",
-            background: loading ? "#ccc" : "green",
-            borderRadius: 6,
-            border: "none",
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "Creating..." : "Create Quiz"}
-        </button>
-      </form>
+              {/* Questions */}
+              <label style={{ color: "black" }}>Select Questions:</label>
+              <div
+                style={{
+                  maxHeight: 150,
+                  overflowY: "auto",
+                  border: "1px solid #ddd",
+                  borderRadius: 6,
+                  padding: 10,
+                  background: "#f9f9f9",
+                }}
+              >
+                {questions.map((q) => {
+                  const selectedInOtherRound =
+                    usedQuestions.includes(q._id) &&
+                    !round.questions.includes(q._id);
+                  const checked = round.questions.includes(q._id);
+
+                  return (
+                    <label
+                      key={q._id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        opacity: selectedInOtherRound ? 0.5 : 1,
+                        marginBottom: 5,
+                        cursor: selectedInOtherRound
+                          ? "not-allowed"
+                          : "pointer",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        disabled={selectedInOtherRound}
+                        checked={checked}
+                        onChange={() => handleQuestionSelect(index, q._id)}
+                        style={{ display: "none" }}
+                      />
+                      <Checkbox checked={checked} />
+                      {q.text}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              style={{ padding: 10, borderRadius: 70 }}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={loading}
+              style={{
+                padding: 10,
+                borderRadius: 6,
+                background: loading ? "#ccc" : "green",
+                color: "#fff",
+                border: "none",
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
+            >
+              {loading ? "Creating..." : "Create Quiz"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -17,7 +17,7 @@ export interface IQuestion extends Document {
     | "Zoology"
     | "Botany";
   roundId?: Types.ObjectId;
-  quizId?: Types.ObjectId;
+
   media?: {
     type: "image" | "video" | "file" | null;
     url: string | null;
@@ -43,7 +43,7 @@ const questionSchema = new Schema<IQuestion>(
       required: true,
     },
     roundId: { type: Schema.Types.ObjectId, ref: "Round" },
-    quizId: { type: Schema.Types.ObjectId, ref: "Quiz" },
+
     media: {
       type: {
         type: String,
