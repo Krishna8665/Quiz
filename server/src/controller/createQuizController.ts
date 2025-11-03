@@ -120,7 +120,8 @@ export const getQuiz = async (req: AuthRequest, res: Response) => {
 
     const quizzes = await Quiz.find({ adminId })
       .populate("rounds")
-      .populate("teams");
+      .populate("teams")
+      .lean();
 
     return res.status(200).json({
       message: quizzes.length
@@ -138,15 +139,18 @@ export const getQuiz = async (req: AuthRequest, res: Response) => {
 
 export const deleteQuiz = async (req: AuthRequest, res: Response) => {
   try {
+    const { id } = req.params;
     const adminId = req.user?.id;
     if (!adminId) return res.status(401).json({ message: "Unauthorized" });
 
-    const { id } = req.params;
     const quiz = await Quiz.findOne({ _id: id, adminId });
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
     // Delete related rounds
     await Round.deleteMany({ _id: { $in: quiz.rounds } });
+
+    // Delete related teams
+    await Team.deleteMany({ _id: { $in: quiz.teams } });
 
     // Delete quiz
     await Quiz.findByIdAndDelete(id);

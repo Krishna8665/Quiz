@@ -11,10 +11,13 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-export const createQuestion = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+export const createQuestion = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<Response> => {
   try {
-    const user = req.user;
-    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const adminId = req.user?.id;
+    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
 
     let { text, options, correctAnswer, category } = req.body;
 
@@ -70,10 +73,10 @@ export const createQuestion = async (req: AuthenticatedRequest, res: Response): 
       text,
       options: optionsWithIds,
       correctAnswer: correctOption._id.toString(),
-      
+
       category,
       media: finalMedia,
-      adminId: user.id,
+      adminId,
     });
 
     await question.save();
@@ -86,7 +89,6 @@ export const createQuestion = async (req: AuthenticatedRequest, res: Response): 
     });
   }
 };
-
 
 // // Create Quiz with rounds
 // export const createQuiz = async (
