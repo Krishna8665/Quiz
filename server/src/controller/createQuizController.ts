@@ -16,6 +16,10 @@ interface RoundInput {
     enablePass?: boolean;
     enableNegative?: boolean;
   };
+  regulation: {
+    description: string;
+  };
+
   questions?: string[];
 }
 
@@ -34,13 +38,15 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
     if (!name || !rounds?.length || !teams?.length)
       return res.status(400).json({ message: "Missing required fields" });
 
-    // ✅ Validate team names are unique within this quiz only
+    //  Validate team names are unique within this quiz only
     const teamNames = teams.map((t) => t.name.trim().toLowerCase());
     if (new Set(teamNames).size !== teamNames.length) {
-      return res.status(400).json({ message: "Team names must be unique within this quiz" });
+      return res
+        .status(400)
+        .json({ message: "Team names must be unique within this quiz" });
     }
 
-    // ✅ Step 1: Create teams
+    //  Step 1: Create teams
     const createdTeams = await Team.insertMany(
       teams.map((t) => ({
         name: t.name,
@@ -49,13 +55,15 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
       }))
     );
 
-    // ✅ Step 2: Create rounds and prevent reused questions
+    // Step 2: Create rounds and prevent reused questions
     const usedQuestionIds: string[] = [];
     const createdRounds = [];
 
     for (const r of rounds) {
       if (r.questions?.some((qId) => usedQuestionIds.includes(qId))) {
-        return res.status(400).json({ message: "A question is being reused across rounds." });
+        return res
+          .status(400)
+          .json({ message: "A question is being reused across rounds." });
       }
 
       if (r.questions) usedQuestionIds.push(...r.questions);
@@ -71,18 +79,24 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
           enablePass: r.rules?.enablePass ?? false,
           enableNegative: r.rules?.enableNegative ?? false,
         },
+        regulation: {
+          description: r.regulation?.description || "",
+        },
         questions: r.questions || [],
       });
 
       // Mark questions as used in that round
       if (r.questions?.length) {
-        await Question.updateMany({ _id: { $in: r.questions } }, { $set: { roundId: round._id } });
+        await Question.updateMany(
+          { _id: { $in: r.questions } },
+          { $set: { roundId: round._id } }
+        );
       }
 
       createdRounds.push(round);
     }
 
-    // ✅ Step 3: Create quiz referencing rounds and teams
+    //  Step 3: Create quiz referencing rounds and teams
     const quiz = await Quiz.create({
       name,
       adminId,
@@ -104,15 +118,21 @@ export const getQuiz = async (req: AuthRequest, res: Response) => {
     const adminId = req.user?.id;
     if (!adminId) return res.status(401).json({ message: "Unauthorized" });
 
-    const quizzes = await Quiz.find({ adminId }).populate("rounds").populate("teams");
+    const quizzes = await Quiz.find({ adminId })
+      .populate("rounds")
+      .populate("teams");
 
     return res.status(200).json({
-      message: quizzes.length ? "Quizzes fetched successfully" : "No quiz found",
+      message: quizzes.length
+        ? "Quizzes fetched successfully"
+        : "No quiz found",
       quiz: quizzes,
     });
   } catch (error: any) {
     console.error("Error fetching quiz:", error.message);
-    return res.status(500).json({ message: error.message || "Internal server error" });
+    return res
+      .status(500)
+      .json({ message: error.message || "Internal server error" });
   }
 };
 
@@ -131,9 +151,13 @@ export const deleteQuiz = async (req: AuthRequest, res: Response) => {
     // Delete quiz
     await Quiz.findByIdAndDelete(id);
 
-    return res.status(200).json({ message: "Quiz and related rounds deleted successfully" });
+    return res
+      .status(200)
+      .json({ message: "Quiz and related rounds deleted successfully" });
   } catch (error: any) {
     console.error("Error deleting quiz:", error.message);
-    return res.status(500).json({ message: error.message || "Internal server error" });
+    return res
+      .status(500)
+      .json({ message: error.message || "Internal server error" });
   }
 };

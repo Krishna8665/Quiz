@@ -3,7 +3,7 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function CreateQuiz() {
-  const [step, setStep] = useState(1); // Step state
+  const [step, setStep] = useState(1);
   const [quizName, setQuizName] = useState("");
   const [teams, setTeams] = useState([{ name: "" }]);
   const [numRounds, setNumRounds] = useState(1);
@@ -15,6 +15,7 @@ export default function CreateQuiz() {
       timeLimitValue: 30,
       points: 0,
       rules: { enablePass: false, enableNegative: false },
+      regulation: { description: "" },
       questions: [],
     },
   ]);
@@ -22,7 +23,7 @@ export default function CreateQuiz() {
   const [usedQuestions, setUsedQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch questions
+  // ✅ Fetch questions
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -39,7 +40,7 @@ export default function CreateQuiz() {
     fetchQuestions();
   }, []);
 
-  // Team handlers
+  // ✅ Team Handlers
   const addTeam = () => setTeams([...teams, { name: "" }]);
   const removeTeam = (i) => setTeams(teams.filter((_, index) => index !== i));
   const handleTeamChange = (i, value) => {
@@ -48,7 +49,7 @@ export default function CreateQuiz() {
     setTeams(updated);
   };
 
-  // Round handlers
+  // ✅ Round Handlers
   const handleNumRoundsChange = (e) => {
     const count = Math.max(1, parseInt(e.target.value) || 1);
     setNumRounds(count);
@@ -63,6 +64,7 @@ export default function CreateQuiz() {
           timeLimitValue: 30,
           points: 0,
           rules: { enablePass: false, enableNegative: false },
+          regulation: { description: "" },
           questions: [],
         });
       }
@@ -76,6 +78,12 @@ export default function CreateQuiz() {
     setRounds(updated);
   };
 
+  const handleRegulationChange = (index, value) => {
+    const updated = [...rounds];
+    updated[index].regulation.description = value;
+    setRounds(updated);
+  };
+
   const handleRuleChange = (index, rule) => {
     const updated = [...rounds];
     updated[index].rules = {
@@ -85,7 +93,7 @@ export default function CreateQuiz() {
     setRounds(updated);
   };
 
-  // Question selection
+  // ✅ Question selection
   const handleQuestionSelect = (roundIndex, questionId) => {
     const updatedRounds = [...rounds];
     const round = updatedRounds[roundIndex];
@@ -103,7 +111,7 @@ export default function CreateQuiz() {
     setRounds(updatedRounds);
   };
 
-  // Custom checkbox
+  // ✅ Custom checkbox (green tick fix)
   const Checkbox = ({ checked }) => (
     <span
       style={{
@@ -130,22 +138,13 @@ export default function CreateQuiz() {
     </span>
   );
 
-  // Submit
+  // ✅ Submit
   const handleSubmit = async () => {
-    // Quiz name validation
     if (!quizName.trim()) return toast.error("Please enter quiz name");
 
-    // Team names validation
     if (teams.some((t) => !t.name.trim()))
       return toast.error("All teams must have a name");
-    // Team names uniqueness validation
-    // const teamNames = teams.map((t) => t.name.trim().toLowerCase());
-    // const uniqueTeamNames = new Set(teamNames);
-    // if (uniqueTeamNames.size !== teamNames.length) {
-    //   return toast.error("Team names must be unique within the quiz");
-    // }
 
-    // Rounds validation
     for (let i = 0; i < rounds.length; i++) {
       const round = rounds[i];
 
@@ -163,11 +162,9 @@ export default function CreateQuiz() {
 
       if (round.points === "" || round.points < 0)
         return toast.error(`Enter valid points for Round ${i + 1}`);
-      // Rules validation: at least one must be enabled
-      if (!round.rules.enablePass && !round.rules.enableNegative)
-        return toast.error(
-          `Please enable at least one rule for Round ${i + 1}`
-        );
+
+      if (!round.regulation.description.trim())
+        return toast.error(`Enter regulation for Round ${i + 1}`);
 
       if (!round.questions || round.questions.length === 0)
         return toast.error(`Select at least one question for Round ${i + 1}`);
@@ -182,7 +179,7 @@ export default function CreateQuiz() {
       );
       toast.success("✅ Quiz created successfully!");
 
-      // Reset all data
+      // Reset
       setStep(1);
       setQuizName("");
       setTeams([{ name: "" }]);
@@ -195,6 +192,7 @@ export default function CreateQuiz() {
           timeLimitValue: 30,
           points: 0,
           rules: { enablePass: false, enableNegative: false },
+          regulation: { description: "" },
           questions: [],
         },
       ]);
@@ -223,7 +221,7 @@ export default function CreateQuiz() {
         🧠 Create New Quiz
       </h1>
 
-      {/* Step-wise navigation */}
+      {/* Step Navigation */}
       <div
         style={{
           display: "flex",
@@ -250,10 +248,9 @@ export default function CreateQuiz() {
         ))}
       </div>
 
-      {/* Step 1: Quiz Name */}
+      {/* Step 1 - Quiz Info */}
       {step === 1 && (
         <div>
-          {/* Quiz Info Section */}
           <section
             style={{
               background: "#f8f9fa",
@@ -269,7 +266,7 @@ export default function CreateQuiz() {
                 fontSize: "28px",
               }}
             >
-              🎯 Quiz Info
+              Quiz Info :
             </h3>
             <label style={{ color: "black" }}>Quiz Name:</label>
             <input
@@ -302,10 +299,10 @@ export default function CreateQuiz() {
         </div>
       )}
 
-      {/* Step 2: Teams */}
+      {/* Step 2 - Teams */}
       {step === 2 && (
         <div>
-          <label style={{ color: "black" }}>👥Teams:</label>
+          <label style={{ color: "black" }}>👥 Teams:</label>
           {teams.map((team, index) => (
             <div
               key={index}
@@ -361,12 +358,8 @@ export default function CreateQuiz() {
           >
             ➕ Add Team
           </button>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              style={{ padding: 10, borderRadius: 70 }}
-            >
+          <div style={{ display: "flex", justifyContent: "space-between"}}>
+            <button type="button" onClick={() => setStep(1)}>
               Back
             </button>
             <button
@@ -377,7 +370,7 @@ export default function CreateQuiz() {
                 borderRadius: 6,
                 background: "#28a745",
                 color: "#fff",
-                border: "none",
+                border: "700px",
                 cursor: "pointer",
               }}
             >
@@ -387,11 +380,10 @@ export default function CreateQuiz() {
         </div>
       )}
 
-      {/* Step 3: Rounds */}
+      {/* Step 3 - Rounds */}
       {step === 3 && (
         <div>
-          {/* Number of rounds */}
-          <label style={{ color: "black" }}>🔄Number of Rounds:</label>
+          <label style={{ color: "black" }}>🔄 Number of Rounds:</label>
           <input
             type="number"
             min="1"
@@ -406,7 +398,6 @@ export default function CreateQuiz() {
             }}
           />
 
-          {/* Round details */}
           {rounds.map((round, index) => (
             <div
               key={index}
@@ -418,16 +409,11 @@ export default function CreateQuiz() {
                 background: "#fafafa",
               }}
             >
-              <h3
-                style={{
-                  color: "black",
-                  alignItems: "center",
-                  marginBottom: 10,
-                }}
-              >
+              <h3 style={{ color: "black", marginBottom: 10 }}>
                 🏆 Round {index + 1}
               </h3>
 
+              {/* Round Name */}
               <label style={{ color: "black" }}>Name:</label>
               <input
                 type="text"
@@ -444,6 +430,7 @@ export default function CreateQuiz() {
                 }}
               />
 
+              {/* Category */}
               <label style={{ color: "black" }}>Category:</label>
               <select
                 value={round.category}
@@ -465,6 +452,7 @@ export default function CreateQuiz() {
                 <option value="buzzer round">Buzzer Round</option>
               </select>
 
+              {/* Time limit */}
               <label style={{ color: "black" }}>Time Limit Type:</label>
               <select
                 value={round.timeLimitType}
@@ -500,6 +488,7 @@ export default function CreateQuiz() {
                 }}
               />
 
+              {/* Points */}
               <label style={{ color: "black" }}>Points:</label>
               <input
                 type="number"
@@ -514,6 +503,24 @@ export default function CreateQuiz() {
                   borderRadius: 6,
                   border: "1px solid #ccc",
                   marginBottom: 10,
+                }}
+              />
+
+              {/* ✅ Regulation */}
+              <label style={{ color: "black" }}>Regulation Description:</label>
+              <textarea
+                value={round.regulation.description}
+                onChange={(e) =>
+                  handleRegulationChange(index, e.target.value)
+                }
+                placeholder="Enter any special rules or regulation for this round..."
+                style={{
+                  width: "100%",
+                  padding: 10,
+                  borderRadius: 6,
+                  border: "1px solid #ccc",
+                  marginBottom: 10,
+                  minHeight: 60,
                 }}
               />
 
@@ -611,11 +618,7 @@ export default function CreateQuiz() {
           ))}
 
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <button
-              type="button"
-              onClick={() => setStep(2)}
-              style={{ padding: 10, borderRadius: 70 }}
-            >
+            <button type="button" onClick={() => setStep(2)}>
               Back
             </button>
             <button
@@ -627,7 +630,7 @@ export default function CreateQuiz() {
                 borderRadius: 6,
                 background: loading ? "#ccc" : "green",
                 color: "#fff",
-                border: "none",
+                border: 700,
                 cursor: loading ? "not-allowed" : "pointer",
               }}
             >
