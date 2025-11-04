@@ -1,14 +1,14 @@
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import "../../assets/styles/AdminCreateUser.css"; 
+import "../../assets/styles/AdminCreateUser.css";
 
 export default function AdminCreateUser() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    role: "user",
+    role: "user", 
   });
 
   const handleChange = (e) => {
@@ -19,12 +19,12 @@ export default function AdminCreateUser() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
+      // ✅ Send cookies automatically with this
       const res = await axios.post(
         "http://localhost:3000/api/auth/admin/register",
         formData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true, // ✅ include cookies in request
         }
       );
 
@@ -32,13 +32,13 @@ export default function AdminCreateUser() {
       setFormData({ name: "", email: "", password: "", role: "user" });
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Failed to create user");
+      toast.error(err.response?.data?.message || "Failed to create user");
     }
   };
 
   return (
     <div className="create-user-container">
-      <h2 className="create-user-title">Create Quiz-Master</h2>
+      <h2 className="create-user-title">Create Quiz Master</h2>
 
       <form className="create-user-form" onSubmit={handleSubmit}>
         <input
