@@ -6,7 +6,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
 
-    "rootDir": "./src",
+    "rootDir": "./",
     "outDir": "./dist",
 
     "strict": true,
@@ -36,6 +36,8 @@
     "incremental": true,
     "tsBuildInfoFile": "./.tsbuildinfo"
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts"],
+  "include": ["server.ts", "src/**/*.ts", "src/**/*.d.ts"],
+
+
   "exclude": ["node_modules", "dist"]
 }

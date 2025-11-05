@@ -7,11 +7,15 @@ import playerRoutes from "./routes/player";
 import teamRoutes from "./routes/team";
 import rounds from "./routes/round";
 import quizRoutes from "./routes/quiz";
-import QuizHistory from "./routes/quizHistory";
+//import QuizHistory from "./routes/quizHistory";
+import history from "./routes/history";
 import quizMasterRoutes from "./routes/manageQuizMaster";
 import dotenv from "dotenv";
 import path from "path";
 import cookieParser from "cookie-parser";
+import events from "events";
+events.EventEmitter.defaultMaxListeners = 20; // or higher
+
 const app = express();
 
 app.use(express.json());
@@ -36,7 +40,8 @@ app.use("/api/team", teamRoutes);
 app.use("/api/round", rounds);
 app.use("/api/quiz", quizRoutes);
 app.use("/api/quizMaster", quizMasterRoutes);
-app.use("/api/history",QuizHistory );
+//app.use("/api/history",QuizHistory );
+app.use("/api/history", history);
 
 // test route in app.ts (temporarily)
 app.get("/api/test-cloudinary", (req, res) => {
