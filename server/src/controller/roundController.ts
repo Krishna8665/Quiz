@@ -1,223 +1,196 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import Round from "../models/createRounds"; 
-import { IRound } from "../models/createRounds";
-import { AuthRequest } from "./types";
+import Round from "../models/createRounds";
 import Question from "../models/question";
 
-// ✅ Create Round Controller
-export const createRound = async (req: Request, res: Response) => {
+// Interface for admin request
+interface AdminRequest extends Request {
+  body: any;
+  params: { adminId?: string; roundId?: string };
+}
+
+/**
+ * ✅ CREATE ROUND (with adminId)
+ */
+export const createRound = async (req: AdminRequest, res: Response) => {
   try {
     const {
       roundNumber,
       name,
       category,
-      timeLimitType,
-      timeLimitValue,
-      points,
       rules,
-      regulation,
-      questions,
       adminId,
+      questions = [],
     } = req.body;
 
-    // ✅ Basic Validation
-    if (!roundNumber || !name || !category || !timeLimitType || !timeLimitValue || !adminId) {
-      return res.status(400).json({
-        message: "❌ Please fill all required fields (roundNumber, name, category, timeLimitType, timeLimitValue, adminId).",
-      });
-    }
+    if (!adminId || !mongoose.Types.ObjectId.isValid(adminId))
+      return res.status(400).json({ message: "Invalid adminId" });
 
-    // ✅ Category validation
-    const validCategories = [
-      "general round",
-      "subject round",
-      "estimation round",
-      "rapid fire round",
-      "buzzer round",
-    ];
-    if (!validCategories.includes(category)) {
-      return res.status(400).json({ message: "❌ Invalid category type." });
-    }
-
-    // ✅ Time limit type validation
-    const validTimeTypes = ["perRound", "perQuestion"];
-    if (!validTimeTypes.includes(timeLimitType)) {
-      return res.status(400).json({ message: "❌ Invalid time limit type." });
-    }
-
-    // ✅ Rules Validation
-    if (!rules) {
-      return res.status(400).json({ message: "❌ Rules object is required." });
-    }
+    if (!roundNumber || !name || !category || !rules)
+      return res.status(400).json({ message: "Missing required fields." });
 
     const {
+      assignQuestionType,
+      numberOfQuestion,
+      enableTimer,
+      points,
       enablePass,
-      passLimit,
+      passCondition,
       enableNegative,
       negativePoints,
-      firstHandQuestions,
-      firstHandPoints,
-      passedPoints,
-      passCondition,
-      passedTime,
-      firstHandTime,
     } = rules;
 
-    // Required fields inside rules
-    if (enablePass && !passCondition) {
-      return res.status(400).json({ message: "❌ Pass condition is required when passing is enabled." });
-    }
+    // 🧩 Validation
+    if (points === undefined || isNaN(points) || points < 0)
+      return res
+        .status(400)
+        .json({ message: "rules.points must be a non-negative number." });
 
-    if (passCondition === "onceToNextTeam" && (!passedTime || passedTime <= 0)) {
+    if (!["forAllTeams", "forEachTeam"].includes(assignQuestionType))
       return res.status(400).json({
-        message: "❌ Passed time must be provided when passCondition is 'onceToNextTeam'.",
+        message: "assignQuestionType must be 'forAllTeams' or 'forEachTeam'.",
       });
-    }
 
-    if (enableNegative && (negativePoints === undefined || negativePoints === null)) {
+    if (typeof numberOfQuestion !== "number" || numberOfQuestion <= 0)
+      return res
+        .status(400)
+        .json({ message: "numberOfQuestion must be a positive number." });
+
+    if (assignQuestionType === "forAllTeams" && enableTimer === true)
       return res.status(400).json({
-        message: "❌ Negative points must be set when negative marking is enabled.",
+        message:
+          "Timer cannot be enabled when assignQuestionType is 'forAllTeams'. Set enableTimer to false.",
       });
-    }
 
-    if (!firstHandQuestions || firstHandQuestions <= 0) {
+    if (enablePass && !passCondition)
       return res.status(400).json({
-        message: "❌ Please specify number of first-hand questions per team.",
+        message: "Pass condition must be set when enablePass is true.",
       });
-    }
 
-    if (!firstHandPoints || firstHandPoints <= 0) {
+    if (enableNegative && (negativePoints === undefined || negativePoints >= 0))
       return res.status(400).json({
-        message: "❌ Please set points for first-hand correct answers.",
+        message:
+          "negativePoints must be a negative number when enableNegative is true.",
       });
-    }
 
-    if (!passedPoints && passCondition === "onceToNextTeam") {
+    // 🧠 Validate question pool
+    const availableQuestions = await Question.find({ adminId });
+    if (!availableQuestions || availableQuestions.length === 0)
       return res.status(400).json({
-        message: "❌ Please set points for passed question answers.",
+        message: `No questions found for this admin'.`,
       });
-    }
 
-    // ✅ Regulation Validation
-    if (!regulation || !regulation.description) {
+    if (availableQuestions.length < numberOfQuestion)
       return res.status(400).json({
-        message: "❌ Regulation description is required.",
+        message: `Not enough questions available. Found ${availableQuestions.length}, need ${numberOfQuestion}.`,
       });
-    }
 
-    // ✅ Create Round Document
-    const newRound: IRound = new Round({
+    // 🎯 Select Questions
+    const selectedQuestions =
+      questions.length > 0
+        ? questions.slice(0, numberOfQuestion)
+        : availableQuestions.slice(0, numberOfQuestion).map((q) => q._id);
+
+    // 🆕 Create new round
+    const newRound = await Round.create({
       roundNumber,
       name,
       category,
-      timeLimitType,
-      timeLimitValue,
-      points: points || 0,
       rules: {
-        enablePass: enablePass ?? false,
-        passLimit: passLimit ?? 0,
-        enableNegative: enableNegative ?? false,
-        negativePoints: negativePoints ?? 0,
-        firstHandQuestions,
-        firstHandPoints,
-        passedPoints: passedPoints ?? 0,
-        passCondition: passCondition || "noPass",
-        passedTime: passedTime ?? 0,
-        firstHandTime: firstHandTime ?? 0,
+        ...rules,
+        assignQuestionType,
+        numberOfQuestion,
+        points,
       },
-      regulation: {
-        description: regulation.description,
-      },
-      questions: questions ? questions.map((q: string) => new mongoose.Types.ObjectId(q)) : [],
+      questions: selectedQuestions,
       adminId,
     });
 
-    // ✅ Save to DB
-    await newRound.save();
-
-    res.status(201).json({
+    return res.status(201).json({
       message: "✅ Round created successfully.",
       round: newRound,
     });
-  } catch (error: any) {
-    console.error("Error creating round:", error);
-    res.status(500).json({
-      message: "❌ Failed to create round.",
-      error: error.message,
-    });
+  } catch (err: any) {
+    console.error("Error creating round:", err);
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", error: err.message });
   }
 };
 
-
-// Get all rounds created by a specific admin
-export const getRounds = async (req: AuthRequest, res: Response) => {
+/**
+ * ✅ GET ALL ROUNDS BY ADMIN
+ */
+export const getRounds = async (req: AdminRequest, res: Response) => {
   try {
-    const adminId = req.params.adminId || req.user?.id;
-    if (!adminId) {
-      return res.status(400).json({ message: "❌ adminId is required." });
-    }
+    const { adminId } = req.params;
 
-    // Fetch rounds belonging to the admin, sorted by roundNumber
-    const rounds = await Round.find({ adminId }).sort({ roundNumber: 1 });
+    if (!adminId || !mongoose.Types.ObjectId.isValid(adminId))
+      return res.status(400).json({ message: "Invalid adminId" });
 
-    if (!rounds.length) {
-      return res.status(200).json({ message: "No rounds found.", rounds: [] });
-    }
+    const rounds = await Round.find({ adminId }).populate("questions");
 
-    return res.status(200).json({
-      message: "Rounds fetched successfully.",
-      rounds,
-    });
-  } catch (error: any) {
-    console.error("Error fetching rounds:", error);
-    return res.status(500).json({
-      message: "❌ Failed to fetch rounds.",
-      error: error.message,
-    });
+    if (rounds.length === 0)
+      return res
+        .status(404)
+        .json({ message: "No rounds found for this admin." });
+
+    return res.status(200).json({ count: rounds.length, rounds });
+  } catch (err: any) {
+    console.error("Error fetching rounds:", err);
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", error: err.message });
   }
 };
 
-
-export const deleteRound = async (req: AuthRequest, res: Response) => {
+/**
+ * ✅ GET SINGLE ROUND BY ID
+ */
+export const getRoundById = async (req: AdminRequest, res: Response) => {
   try {
     const { roundId } = req.params;
-    const adminId = req.user?.id; // now TS knows user may exist
 
-    if (!adminId) {
-      return res.status(401).json({ message: "❌ Unauthorized" });
-    }
+    if (!roundId || !mongoose.Types.ObjectId.isValid(roundId))
+      return res.status(400).json({ message: "Invalid roundId" });
 
-    if (!roundId) {
-      return res.status(400).json({ message: "❌ roundId is required." });
-    }
+    const round = await Round.findById(roundId).populate("questions");
 
-    const round = await Round.findOne({ _id: roundId, adminId });
-    if (!round) {
-      return res.status(404).json({ message: "❌ Round not found." });
-    }
+    if (!round) return res.status(404).json({ message: "Round not found." });
 
-     if (round.questions && round.questions.length > 0) {
-      // Convert each ID to ObjectId to avoid type errors
-      const questionIds = round.questions.map((q) =>
-        typeof q === "string" ? new mongoose.Types.ObjectId(q) : q
-      );
-
-      await Question.updateMany(
-        { _id: { $in: questionIds } },
-        { $unset: { roundId: "" } }
-      );
-    }
-
-    await Round.findByIdAndDelete(roundId);
-
-    return res.status(200).json({ message: "✅ Round deleted successfully." });
-  } catch (error: any) {
-    console.error("Error deleting round:", error);
-    return res.status(500).json({
-      message: "❌ Failed to delete round.",
-      error: error.message,
-    });
+    return res.status(200).json({ round });
+  } catch (err: any) {
+    console.error("Error fetching round:", err);
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", error: err.message });
   }
 };
 
+/**
+ * ✅ DELETE ROUND
+ */
+export const deleteRound = async (req: AdminRequest, res: Response) => {
+  try {
+    const { roundId } = req.params;
+
+    if (!roundId || !mongoose.Types.ObjectId.isValid(roundId))
+      return res.status(400).json({ message: "Invalid roundId" });
+
+    const deleted = await Round.findByIdAndDelete(roundId);
+
+    if (!deleted)
+      return res
+        .status(404)
+        .json({ message: "Round not found or already deleted." });
+
+    return res
+      .status(200)
+      .json({ message: "🗑️ Round deleted successfully.", deleted });
+  } catch (err: any) {
+    console.error("Error deleting round:", err);
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", error: err.message });
+  }
+};

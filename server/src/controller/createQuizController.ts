@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import Quiz from "../models/createQuiz";
 import Round, { PassCondition } from "../models/createRounds";
-import Question from "../models/question";
 import Team from "../models/team";
 import { AuthRequest } from "./types";
 
@@ -13,25 +13,25 @@ interface RoundInput {
     | "estimation round"
     | "rapid fire round"
     | "buzzer round";
-  timeLimitType: "perRound" | "perQuestion";
-  timeLimitValue: number;
-  points?: number;
-  rules?: {
-    enablePass?: boolean;
-    passLimit?: number;
+  rules: {
+    enableTimer: boolean;
+    timerType?: "perQuestion" | "allQuestions";
+    timeLimitValue?: number;
     enableNegative?: boolean;
     negativePoints?: number;
-    firstHandQuestions?: number;
-    firstHandPoints?: number;
-    passedPoints?: number;
+    enablePass?: boolean;
     passCondition?: PassCondition;
-    firstHandTime?: number;
+    passLimit?: number;
+    passedPoints?: number;
     passedTime?: number;
+    assignQuestionType: "forAllTeams" | "forEachTeam";
+    numberOfQuestion: number;
+    points: number; // points per question
   };
   regulation?: {
     description?: string;
   };
-  questions?: string[];
+  questions: string[]; // Admin provides questions
 }
 
 interface QuizInput {
@@ -43,17 +43,25 @@ interface QuizInput {
 export const createQuiz = async (req: AuthRequest, res: Response) => {
   try {
     const adminId = req.user?.id;
-    if (!adminId) return res.status(401).json({ message: "Unauthorized" });
+    if (!adminId)
+      return res.status(401).json({ message: "Unauthorized" });
 
     const { name, rounds, teams } = req.body as QuizInput;
-    if (!name?.trim()) return res.status(400).json({ message: "Quiz name is required" });
-    if (!rounds?.length) return res.status(400).json({ message: "At least one round is required" });
-    if (!teams?.length) return res.status(400).json({ message: "At least one team is required" });
+    if (!name?.trim())
+      return res.status(400).json({ message: "Quiz name is required" });
+    if (!rounds?.length)
+      return res
+        .status(400)
+        .json({ message: "At least one round is required" });
+    if (!teams?.length)
+      return res.status(400).json({ message: "At least one team is required" });
 
     // Validate unique team names
     const teamNames = teams.map((t) => t.name.trim().toLowerCase());
     if (new Set(teamNames).size !== teamNames.length) {
-      return res.status(400).json({ message: "Team names must be unique within this quiz" });
+      return res
+        .status(400)
+        .json({ message: "Team names must be unique within this quiz" });
     }
 
     // Step 1: Create teams
@@ -65,82 +73,108 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
       }))
     );
 
-    // Step 2: Create rounds (with full validation)
-    const usedQuestionIds: string[] = [];
+    // Step 2: Create rounds
     const createdRounds = [];
-
     for (const [index, r] of rounds.entries()) {
-      if (!r.name?.trim()) return res.status(400).json({ message: `Round ${index + 1}: Name is required` });
-      if (!r.category) return res.status(400).json({ message: `Round ${index + 1}: Category is required` });
-      if (!r.timeLimitType) return res.status(400).json({ message: `Round ${index + 1}: Time limit type required` });
-      if (!r.timeLimitValue) return res.status(400).json({ message: `Round ${index + 1}: Time limit value required` });
+      if (!r.name?.trim())
+        return res
+          .status(400)
+          .json({ message: `Round ${index + 1}: Name is required` });
+      if (!r.category)
+        return res
+          .status(400)
+          .json({ message: `Round ${index + 1}: Category is required` });
+      if (!r.rules)
+        return res
+          .status(400)
+          .json({ message: `Round ${index + 1}: Rules are required` });
 
-      // Prevent reused questions
-      if (r.questions?.some((qId) => usedQuestionIds.includes(qId))) {
-        return res.status(400).json({ message: "A question is being reused across rounds" });
+      const rules = r.rules;
+
+      // Validation for assignQuestionType
+      if (!["forAllTeams", "forEachTeam"].includes(rules.assignQuestionType)) {
+        return res
+          .status(400)
+          .json({ message: `Round ${index + 1}: Invalid assignQuestionType` });
       }
-      if (r.questions) usedQuestionIds.push(...r.questions);
 
-      // Default rule setup
-      const rules = {
-        enablePass: r.rules?.enablePass ?? false,
-        passLimit: r.rules?.passLimit ?? 0,
-        enableNegative: r.rules?.enableNegative ?? false,
-        negativePoints: r.rules?.negativePoints ?? 0,
-        firstHandQuestions: r.rules?.firstHandQuestions ?? 0,
-        firstHandPoints: r.rules?.firstHandPoints ?? 0,
-        passedPoints: r.rules?.passedPoints ?? 0,
-        passCondition: r.rules?.passCondition ?? "noPass",
-        firstHandTime: r.rules?.firstHandTime ?? 0,
-        passedTime: r.rules?.passedTime ?? 0,
-      };
+      if (rules.assignQuestionType === "forAllTeams" && rules.enableTimer) {
+        return res.status(400).json({
+          message: `Round ${index + 1}: enableTimer must be false for assignQuestionType "forAllTeams"`,
+        });
+      }
 
-      // --- Validation Logic for Rules ---
+      if (!rules.numberOfQuestion || rules.numberOfQuestion <= 0) {
+        return res
+          .status(400)
+          .json({
+            message: `Round ${index + 1}: numberOfQuestion must be greater than 0`,
+          });
+      }
+
+      if (!rules.points || rules.points <= 0) {
+        return res
+          .status(400)
+          .json({
+            message: `Round ${index + 1}: points must be greater than 0`,
+          });
+      }
+
       if (rules.enableNegative && (!rules.negativePoints || rules.negativePoints <= 0)) {
-        return res.status(400).json({ message: `Round ${index + 1}: Negative points must be greater than 0 when negative is enabled.` });
+        return res
+          .status(400)
+          .json({ message: `Round ${index + 1}: negativePoints must be > 0` });
       }
 
       if (rules.enablePass) {
         if (!rules.passCondition)
-          return res.status(400).json({ message: `Round ${index + 1}: Pass condition must be selected when passing is enabled.` });
+          return res
+            .status(400)
+            .json({
+              message: `Round ${index + 1}: passCondition required when enablePass is true`,
+            });
 
         if (rules.passCondition === "onceToNextTeam") {
           if (!rules.passedPoints || rules.passedPoints <= 0)
-            return res.status(400).json({ message: `Round ${index + 1}: Passed points must be provided for once-to-next-team passes.` });
-
+            return res
+              .status(400)
+              .json({
+                message: `Round ${index + 1}: passedPoints must be > 0 for onceToNextTeam`,
+              });
           if (!rules.passedTime || rules.passedTime <= 0)
-            return res.status(400).json({ message: `Round ${index + 1}: Passed time must be provided for once-to-next-team passes.` });
+            return res
+              .status(400)
+              .json({
+                message: `Round ${index + 1}: passedTime must be > 0 for onceToNextTeam`,
+              });
         }
       }
+
+      // Validate provided questions
+      if (!r.questions || r.questions.length < rules.numberOfQuestion) {
+        return res.status(400).json({
+          message: `Round ${index + 1}: Not enough questions provided. Required ${rules.numberOfQuestion}, found ${r.questions?.length || 0}`,
+        });
+      }
+
+      const selectedQuestions = r.questions.slice(0, rules.numberOfQuestion);
 
       // Create round
       const round = await Round.create({
         roundNumber: index + 1,
         name: r.name,
         category: r.category,
-        timeLimitType: r.timeLimitType,
-        timeLimitValue: r.timeLimitValue,
-        points: r.points || 0,
-        adminId,
         rules,
-        regulation: {
-          description: r.regulation?.description || "",
-        },
-        questions: r.questions || [],
+        regulation: { description: r.regulation?.description || "" },
+        questions: selectedQuestions,
+        adminId,
+        points: rules.points,
       });
-
-      // Mark questions with round ID
-      if (r.questions?.length) {
-        await Question.updateMany(
-          { _id: { $in: r.questions } },
-          { $set: { roundId: round._id } }
-        );
-      }
 
       createdRounds.push(round);
     }
 
-    // Step 3: Create quiz referencing rounds & teams
+    // Step 3: Create quiz
     const quiz = await Quiz.create({
       name,
       adminId,
@@ -157,7 +191,9 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     console.error("Error creating quiz:", error);
-    res.status(500).json({ message: "Internal server error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -175,12 +211,8 @@ export const getQuiz = async (req: AuthRequest, res: Response) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    if (!quizzes.length) {
-      return res.status(200).json({ message: "No quizzes found", quizzes: [] });
-    }
-
     return res.status(200).json({
-      message: "Quizzes fetched successfully",
+      message: quizzes.length ? "Quizzes fetched successfully" : "No quizzes found",
       quizzes,
     });
   } catch (error: any) {

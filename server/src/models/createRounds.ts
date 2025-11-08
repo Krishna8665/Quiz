@@ -1,18 +1,30 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
 export type PassCondition = "noPass" | "onceToNextTeam" | "wrongIfPassed";
+export type TimerType = "perQuestion" | "allQuestions";
+export type AssignQuestionType = "forAllTeams" | "forEachTeam";
 
 export interface IRoundRules {
-  enablePass: boolean;
-  passLimit: number; // how many times a question can be passed
+  // ✅ Timer Configuration
+  enableTimer: boolean;
+  timerType?: TimerType; // Only if enableTimer = true
+  timeLimitValue?: number; // Time in seconds or minutes
+
+  // ✅ Negative Points Configuration
   enableNegative: boolean;
-  negativePoints: number; // points to deduct if wrong
-  firstHandQuestions: number; // how many first-hand questions per team
-  firstHandPoints: number; // points for correct first-hand answer
-  passedPoints: number; // points for correct passed answer
-  passCondition: PassCondition; // "noPass" | "onceToNextTeam" | "wrongIfPassed"
-  passedTime?: number; // time allowed for passed question if applicable
-  firstHandTime?: number; // time allowed per first-hand question
+  negativePoints?: number;
+
+  // ✅ Pass Rules
+  enablePass: boolean;
+  passCondition?: PassCondition;
+  passLimit?: number; // how many times a question can be passed
+  passedPoints?: number; // points for correct answer when passed
+  passedTime?: number; // time for passed question
+  assignQuestionType?: AssignQuestionType; // "forAllTeams" or "forEachTeam"
+  numberOfQuestion?: number;
+
+  // ✅ Scoring
+  points: number; // main point for correct answer
 }
 
 export interface IRound extends Document {
@@ -24,13 +36,14 @@ export interface IRound extends Document {
     | "estimation round"
     | "rapid fire round"
     | "buzzer round";
-  timeLimitType: "perRound" | "perQuestion";
-  timeLimitValue: number; // total round time or per question time
-  points: number;
-  rules: IRoundRules;
+
   regulation: {
     description: string;
   };
+
+  // ✅ Rules Configuration
+  rules: IRoundRules;
+
   questions: Types.ObjectId[];
   adminId: Types.ObjectId | string;
 }
@@ -38,7 +51,6 @@ export interface IRound extends Document {
 const RoundSchema = new Schema<IRound>(
   {
     roundNumber: { type: Number, required: true },
-
     name: { type: String, required: true },
     category: {
       type: String,
@@ -51,29 +63,35 @@ const RoundSchema = new Schema<IRound>(
       ],
       required: true,
     },
-    timeLimitType: {
-      type: String,
-      enum: ["perRound", "perQuestion"],
-      required: true,
-    },
-    timeLimitValue: { type: Number, required: true },
-    points: { type: Number, default: 0 },
 
     rules: {
-      enablePass: { type: Boolean, default: false },
-      passLimit: { type: Number, default: 0 },
+      enableTimer: { type: Boolean, default: false },
+      timerType: {
+        type: String,
+        enum: ["perQuestion", "allQuestions"],
+        default: "perQuestion",
+      },
+      timeLimitValue: { type: Number, default: 0 },
+
       enableNegative: { type: Boolean, default: false },
       negativePoints: { type: Number, default: 0 },
-      firstHandQuestions: { type: Number, default: 0 },
-      firstHandPoints: { type: Number, default: 0 },
-      passedPoints: { type: Number, default: 0 },
+
+      enablePass: { type: Boolean, default: false },
       passCondition: {
         type: String,
         enum: ["noPass", "onceToNextTeam", "wrongIfPassed"],
         default: "noPass",
       },
-      passedTime: { type: Number, default: 0 },
-      firstHandTime: { type: Number, default: 0 },
+      passLimit: { type: Number, default: 0 },
+      passedPoints: { type: Number, default: 0 },
+      passedTime: { type: Number, default: 30 },
+      assignQuestionType: {
+        type: String,
+        enum: ["forAllTeams", "forEachTeam"],
+        default: "forEachTeam",
+      },
+      numberOfQuestion: { type: Number, default: 1 },
+      points: { type: Number, default: 10 },
     },
 
     regulation: {
@@ -81,13 +99,11 @@ const RoundSchema = new Schema<IRound>(
     },
 
     questions: [{ type: Schema.Types.ObjectId, ref: "Question", default: [] }],
-
     adminId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
 );
 
-// ✅ Optional: Add index for faster queries (filter by admin or category)
 RoundSchema.index({ adminId: 1 });
 RoundSchema.index({ category: 1 });
 
