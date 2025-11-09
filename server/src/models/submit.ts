@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
-// ✅ Define the interface
 export interface ISubmit extends Document {
   quizId: mongoose.Types.ObjectId;
   roundId: mongoose.Types.ObjectId;
@@ -10,9 +9,9 @@ export interface ISubmit extends Document {
   isCorrect: boolean;
   pointsEarned: number;
   createdAt: Date;
+  updatedAt: Date;
 }
 
-// ✅ Define the schema
 const SubmitSchema = new Schema<ISubmit>(
   {
     quizId: { type: Schema.Types.ObjectId, ref: "Quiz", required: true },
@@ -26,8 +25,7 @@ const SubmitSchema = new Schema<ISubmit>(
   { timestamps: true }
 );
 
-// ✅ Properly export the model with type
-const Submit: Model<ISubmit> =
+const Submit =
   (mongoose.models.Submit as Model<ISubmit>) ||
   mongoose.model<ISubmit>("Submit", SubmitSchema);
 
