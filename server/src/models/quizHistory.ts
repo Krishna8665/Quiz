@@ -1,49 +1,44 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Types } from "mongoose";
 
-interface TeamStats {
-  teamId: mongoose.Types.ObjectId;
-  teamName: string;
-  attempted: number;
-  correct: number;
-  wrong: number;
-  points: number;
+export interface IAnswer {
+  questionId: Types.ObjectId;
+  givenAnswer: string | number;
+  pointsEarned: number;
+  isCorrect: boolean;
+  isPassed: boolean;
 }
 
-interface RoundHistory {
-  roundNumber: number;
-  roundId: mongoose.Types.ObjectId;
-  roundName: string;
-  enableNegativePoints: boolean;
-  teams: TeamStats[];
+export interface IQuizHistory extends Document {
+  quizId: Types.ObjectId;
+  roundId: Types.ObjectId;
+  teamId: Types.ObjectId;
+  answers: IAnswer[];
+  totalPoints: number;
 }
 
-export interface QuizHistoryDocument extends Document {
-  quizId: mongoose.Types.ObjectId;
-  rounds: RoundHistory[];
-  total: TeamStats[];
-}
+const answerSchema = new Schema<IAnswer>(
+  {
+    questionId: { type: Schema.Types.ObjectId, ref: "Question", required: true },
+    givenAnswer: { type: Schema.Types.Mixed, required: true },
+    pointsEarned: { type: Number, required: true },
+    isCorrect: { type: Boolean, default: false },
+    isPassed: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
 
-const TeamStatsSchema = new Schema<TeamStats>({
-  teamId: { type: Schema.Types.ObjectId, required: true, ref: "Team" },
-  teamName: { type: String, required: true },
-  attempted: { type: Number, default: 0 },
-  correct: { type: Number, default: 0 },
-  wrong: { type: Number, default: 0 },
-  points: { type: Number, default: 0 },
-});
+const quizHistorySchema = new Schema<IQuizHistory>(
+  {
+    quizId: { type: Schema.Types.ObjectId, ref: "Quiz", required: true },
+    roundId: { type: Schema.Types.ObjectId, ref: "Round", required: true },
+    teamId: { type: Schema.Types.ObjectId, ref: "Team", required: true },
+    answers: { type: [answerSchema], default: [] },
+    totalPoints: { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
 
-const RoundHistorySchema = new Schema<RoundHistory>({
-  roundNumber: { type: Number, required: true },
-  roundId: { type: Schema.Types.ObjectId, required: true, ref: "Round" },
-  roundName: { type: String, required: true },
-  enableNegativePoints: { type: Boolean, default: false },
-  teams: [TeamStatsSchema],
-});
+// ✅ Compound unique index: one history per quiz+round+team
+quizHistorySchema.index({ quizId: 1, roundId: 1, teamId: 1 }, { unique: true });
 
-const QuizHistorySchema = new Schema<QuizHistoryDocument>({
-  quizId: { type: Schema.Types.ObjectId, required: true, ref: "Quiz", unique: true },
-  rounds: [RoundHistorySchema],
-  total: [TeamStatsSchema],
-});
-
-export default mongoose.model<QuizHistoryDocument>("QuizHistory", QuizHistorySchema);
+export default mongoose.model<IQuizHistory>("QuizHistory", quizHistorySchema);

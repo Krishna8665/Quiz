@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import Round from "../models/createRounds";
 import Question from "../models/question";
-import Quiz from "../models/createQuiz"; // ✅ To get number of teams
+import Quiz from "../models/createQuiz"; // 
 
 interface AdminRequest extends Request {
   body: any;
@@ -10,7 +10,7 @@ interface AdminRequest extends Request {
 }
 
 /**
- * ✅ CREATE ROUND (with validation for assignQuestionType)
+ *  CREATE ROUND (with validation for assignQuestionType)
  */
 export const createRound = async (req: AdminRequest, res: Response) => {
   try {

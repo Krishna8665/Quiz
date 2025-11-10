@@ -2,23 +2,37 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import QuizHistory from "../models/quizHistory";
 
-export const getQuizHistory = async (req: Request, res: Response) => {
+interface QuizHistoryRequest extends Request {
+  params: {
+    quizId: string;
+  };
+}
+
+export const getQuizHistory = async (req: QuizHistoryRequest, res: Response) => {
   try {
     const { quizId } = req.params;
-    if (!quizId || !mongoose.Types.ObjectId.isValid(quizId))
+
+    // Validate quizId
+    if (!quizId || !mongoose.Types.ObjectId.isValid(quizId)) {
       return res.status(400).json({ message: "Invalid quizId" });
+    }
 
-    const quizHistory = await QuizHistory.findOne({ quizId });
-    if (!quizHistory)
-      return res.status(404).json({ message: "No history found" });
-
-    res.json({
-      quizId,
-      rounds: quizHistory.rounds,
-      total: quizHistory.total,
+    // Fetch quiz history
+    const history = await QuizHistory.findOne({ quizId }).populate({
+      path: "rounds.roundId",
+      select: "name category rules",
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+
+    if (!history) {
+      return res.status(404).json({ message: "Quiz history not found" });
+    }
+
+    return res.status(200).json({ history });
+  } catch (err: any) {
+    console.error("GetQuizHistory Error:", err);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: err.message,
+    });
   }
 };
