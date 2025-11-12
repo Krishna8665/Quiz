@@ -2,16 +2,13 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import Round from "../models/createRounds";
 import Question from "../models/question";
-import Quiz from "../models/createQuiz"; // 
+import Quiz from "../models/createQuiz"; //
 
 interface AdminRequest extends Request {
   body: any;
   params: { adminId?: string; roundId?: string };
 }
 
-/**
- *  CREATE ROUND (with validation for assignQuestionType)
- */
 export const createRound = async (req: AdminRequest, res: Response) => {
   try {
     const {
@@ -21,7 +18,7 @@ export const createRound = async (req: AdminRequest, res: Response) => {
       rules,
       adminId,
       questions = [],
-      quizId, // ✅ include quizId to know how many teams exist
+      quizId,
     } = req.body;
 
     if (!adminId || !mongoose.Types.ObjectId.isValid(adminId))
@@ -46,7 +43,7 @@ export const createRound = async (req: AdminRequest, res: Response) => {
       negativePoints,
     } = rules;
 
-    // 🧩 Basic Rules Validation
+    // Basic Rules Validation
     if (points === undefined || isNaN(points) || points < 0)
       return res
         .status(400)
@@ -79,7 +76,7 @@ export const createRound = async (req: AdminRequest, res: Response) => {
           "negativePoints must be a negative number when enableNegative is true.",
       });
 
-    // 🧠 Fetch total teams for the quiz
+    // Fetch total teams for the quiz
     const quiz = await Quiz.findById(quizId).populate("teams");
     if (!quiz)
       return res
@@ -90,14 +87,14 @@ export const createRound = async (req: AdminRequest, res: Response) => {
     if (numTeams === 0)
       return res.status(400).json({ message: "No teams found in this quiz." });
 
-    // 🧠 Validate question pool
+    // Validate question pool
     const availableQuestions = await Question.find({ adminId });
     if (!availableQuestions || availableQuestions.length === 0)
       return res.status(400).json({
         message: `No questions found for this admin.`,
       });
 
-    // 🎯 Required question count based on assign type
+    // Required question count based on assign type
     const requiredQuestionCount =
       assignQuestionType === "forEachTeam"
         ? numberOfQuestion * numTeams
@@ -108,14 +105,14 @@ export const createRound = async (req: AdminRequest, res: Response) => {
         message: `Not enough questions available. Found ${availableQuestions.length}, need ${requiredQuestionCount}.`,
       });
 
-    // 🎯 Validate provided questions count
+    // Validate provided questions count
     if (questions.length < requiredQuestionCount) {
       return res.status(400).json({
         message: `You must select ${requiredQuestionCount} questions because assignQuestionType is '${assignQuestionType}' and there are ${numTeams} teams.`,
       });
     }
 
-    // ✅ Select only the required number of questions
+    // Select only the required number of questions
     const selectedQuestions = questions.slice(0, requiredQuestionCount);
 
     // 🆕 Create new round
@@ -145,11 +142,6 @@ export const createRound = async (req: AdminRequest, res: Response) => {
   }
 };
 
-/**
- * ✅ GET ALL ROUNDS BY ADMIN OR QUIZ
- * - You can get all rounds by adminId or quizId
- * - If quizId is provided, returns rounds linked to that quiz
- */
 export const getRounds = async (req: Request, res: Response) => {
   try {
     const { adminId, quizId } = req.query;
@@ -178,7 +170,7 @@ export const getRounds = async (req: Request, res: Response) => {
     let rounds;
 
     if (quizId) {
-      // ✅ Find by quiz: populate rounds via quiz document
+      // Find by quiz: populate rounds via quiz document
       const quiz = await Quiz.findById(quizId)
         .populate({
           path: "rounds",
@@ -190,7 +182,7 @@ export const getRounds = async (req: Request, res: Response) => {
 
       rounds = quiz.rounds;
     } else {
-      // ✅ Find all rounds created by admin
+      //  Find all rounds created by admin
       rounds = await Round.find({ adminId })
         .populate("questions")
         .sort({ createdAt: -1 })
@@ -214,9 +206,6 @@ export const getRounds = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * ✅ GET SINGLE ROUND BY ID
- */
 export const getRoundById = async (req: Request, res: Response) => {
   try {
     const { roundId } = req.params;
@@ -240,10 +229,6 @@ export const getRoundById = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * ✅ DELETE ROUND BY ID
- * - Removes round and also updates any quiz that references it
- */
 export const deleteRound = async (req: Request, res: Response) => {
   try {
     const { roundId } = req.params;
@@ -254,14 +239,14 @@ export const deleteRound = async (req: Request, res: Response) => {
     const round = await Round.findById(roundId);
     if (!round) return res.status(404).json({ message: "Round not found" });
 
-    // 🧹 Remove round from any quiz that references it
+    //  Remove round from any quiz that references it
     await Quiz.updateMany({ rounds: roundId }, { $pull: { rounds: roundId } });
 
-    // 🗑️ Delete the round
+    // Delete the round
     await Round.findByIdAndDelete(roundId);
 
     return res.status(200).json({
-      message: "🗑️ Round deleted successfully",
+      message: " Round deleted successfully",
       deletedRoundId: roundId,
     });
   } catch (err: any) {

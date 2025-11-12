@@ -140,11 +140,9 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
 
         if (rules.passCondition === "onceToNextTeam") {
           if (!rules.passedPoints || rules.passedPoints <= 0)
-            return res
-              .status(400)
-              .json({
-                message: `Round ${index + 1}: passedPoints must be > 0`,
-              });
+            return res.status(400).json({
+              message: `Round ${index + 1}: passedPoints must be > 0`,
+            });
           if (!rules.passedTime || rules.passedTime <= 0)
             return res
               .status(400)
@@ -208,9 +206,6 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/**
- * Get all quizzes created by the logged-in admin
- */
 export const getQuiz = async (req: AuthRequest, res: Response) => {
   try {
     const adminId = req.user?.id;
@@ -237,9 +232,6 @@ export const getQuiz = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/**
- * Delete a quiz and all related rounds & teams
- */
 export const deleteQuiz = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params; // quiz ID

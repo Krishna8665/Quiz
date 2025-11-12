@@ -5,16 +5,16 @@ export type TimerType = "perQuestion" | "allQuestions";
 export type AssignQuestionType = "forAllTeams" | "forEachTeam";
 
 export interface IRoundRules {
-  // ✅ Timer Configuration
+  // Timer Configuration
   enableTimer: boolean;
   timerType?: TimerType; // Only if enableTimer = true
   timeLimitValue?: number; // Time in seconds or minutes
 
-  // ✅ Negative Points Configuration
+  // Negative Points Configuration
   enableNegative: boolean;
   negativePoints?: number;
 
-  // ✅ Pass Rules
+  // Pass Rules
   enablePass: boolean;
   passCondition?: PassCondition;
   passLimit?: number; // how many times a question can be passed
@@ -23,7 +23,7 @@ export interface IRoundRules {
   assignQuestionType?: AssignQuestionType; // "forAllTeams" or "forEachTeam"
   numberOfQuestion?: number;
 
-  // ✅ Scoring
+  //  Scoring
   points: number; // main point for correct answer
 }
 
@@ -41,7 +41,7 @@ export interface IRound extends Document {
     description: string;
   };
 
-  // ✅ Rules Configuration
+  // Rules Configuration
   rules: IRoundRules;
 
   questions: Types.ObjectId[];
