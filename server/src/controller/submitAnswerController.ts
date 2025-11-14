@@ -159,10 +159,10 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
             await existingSubmit.save();
 
             // Adjust team points if points changed
-            if (oldPoints !== points) {
+            if (points > 0) {
               const team = await Team.findById(t.teamId);
               if (team) {
-                team.points = (team.points || 0) - oldPoints + points;
+                team.points = (team.points || 0) + points; // add winner points
                 await team.save();
               }
             }
