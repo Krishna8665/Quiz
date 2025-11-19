@@ -28,7 +28,7 @@ export const createQuestion = async (
     let optionsWithIds: any[] = [];
     let shortAnswerObj: any = null;
 
-    //  MCQ 
+    //  MCQ
     if (options) {
       if (typeof options === "string") {
         try {
@@ -60,15 +60,15 @@ export const createQuestion = async (
       correctAnswer = correctOption._id.toString();
     }
 
-    //  SHORT / ESTIMATION 
+    //  SHORT / ESTIMATION
     if (shortAnswer !== undefined) {
       const textValue = String(shortAnswer);
       const id = new mongoose.Types.ObjectId();
       shortAnswerObj = { _id: id, text: textValue };
-      correctAnswer = id.toString(); 
+      correctAnswer = id.toString();
     }
 
-    //  MEDIA 
+    //  MEDIA
     let finalMedia = null;
     if (req.file) {
       const file = req.file as any;
@@ -95,12 +95,10 @@ export const createQuestion = async (
     return res.status(201).json({ success: true, question });
   } catch (err) {
     console.error("Error creating question:", err);
-    return res
-      .status(500)
-      .json({
-        message: "Error creating question",
-        error: err instanceof Error ? err.message : String(err),
-      });
+    return res.status(500).json({
+      message: "Error creating question",
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 };
 

@@ -9,7 +9,7 @@ export interface IQuestion extends Document {
   text: string;
   options?: IOption[]; // optional for MCQ
   shortAnswer?: IOption; // NEW: short answer as object with _id
-  correctAnswer: string; 
+  correctAnswer: string;
   category:
     | "Physics"
     | "Maths"

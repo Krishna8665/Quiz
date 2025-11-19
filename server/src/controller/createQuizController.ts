@@ -1,4 +1,3 @@
-// ============= CONTROLLER: controllers/createQuizController.ts =============
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import Quiz from "../models/createQuiz";
@@ -156,7 +155,9 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
       // Validate questions array
       if (!r.questions || r.questions.length < requiredCount) {
         throw new Error(
-          `Round ${i + 1}: You must select ${requiredCount} questions for ${numTeams} teams`
+          `Round ${
+            i + 1
+          }: You must select ${requiredCount} questions for ${numTeams} teams`
         );
       }
 
@@ -207,7 +208,11 @@ export const createQuiz = async (req: AuthRequest, res: Response) => {
     });
   }
 };
-export const getQuizById = async (req: AuthRequest, res: Response): Promise<Response> => {
+
+export const getQuizById = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
   try {
     const { quizId } = req.params;
     const adminId = req.user?.id;
@@ -242,7 +247,10 @@ export const getQuizById = async (req: AuthRequest, res: Response): Promise<Resp
 };
 
 // Get All Quizzes
-export const getAllQuiz = async (req: AuthRequest, res: Response): Promise<Response> => {
+export const getAllQuiz = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
   try {
     const adminId = req.user?.id;
 
@@ -270,7 +278,10 @@ export const getAllQuiz = async (req: AuthRequest, res: Response): Promise<Respo
 };
 
 // Delete Quiz
-export const deleteQuiz = async (req: AuthRequest, res: Response): Promise<Response> => {
+export const deleteQuiz = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -330,5 +341,3 @@ export const deleteQuiz = async (req: AuthRequest, res: Response): Promise<Respo
     });
   }
 };
-
-

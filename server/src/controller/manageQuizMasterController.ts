@@ -22,7 +22,9 @@ export const getQuizMasters = async (req: AuthRequest, res: Response) => {
     res.status(200).json({ success: true, quizMasters });
   } catch (err) {
     console.error("Error fetching quiz masters:", err);
-    res.status(500).json({ success: false, message: "Failed to fetch quiz masters" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch quiz masters" });
   }
 };
 
@@ -39,14 +41,20 @@ export const deleteQuizMaster = async (req: AuthRequest, res: Response) => {
     if (!quizMaster) {
       return res
         .status(404)
-        .json({ message: "Quiz master not found or not created by this admin" });
+        .json({
+          message: "Quiz master not found or not created by this admin",
+        });
     }
 
     await User.findByIdAndDelete(id);
 
-    res.status(200).json({ success: true, message: "Quiz master deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Quiz master deleted successfully" });
   } catch (err) {
     console.error("Error deleting quiz master:", err);
-    res.status(500).json({ success: false, message: "Failed to delete quiz master" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to delete quiz master" });
   }
 };
