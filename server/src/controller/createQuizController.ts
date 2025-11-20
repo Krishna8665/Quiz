@@ -246,6 +246,7 @@ export const getQuizById = async (
   }
 };
 
+
 // Get All Quizzes
 export const getAllQuiz = async (
   req: AuthRequest,
