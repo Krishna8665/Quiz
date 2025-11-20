@@ -102,34 +102,28 @@ export const createQuestion = async (
   }
 };
 
-export const getQuestions = async (
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<Response> => {
+export const getQuestions = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
   try {
-    if (!req.user) {
+    const user = req.user;
+    if (!user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    let adminIdToUse;
+    let adminId;
 
-    // If admin is logged in → use their own ID
-    if (req.user.role === "admin") {
-      adminIdToUse = req.user.id;
+    if (user.role === "admin") {
+      adminId = user.id; // admin sees their own questions
+    } else {
+      adminId = user.createdBy; // user sees admin’s questions
     }
 
-    // If user is logged in → use the admin who created this user
-    else if (req.user.role === "user") {
-      adminIdToUse = req.user.createdBy;
+    if (!adminId) {
+      return res.status(400).json({ message: "Admin ID not found for user" });
     }
 
-    if (!adminIdToUse) {
-      return res.status(403).json({ message: "Forbidden: No valid admin reference" });
-    }
+    const questions = await Question.find({ adminId }).lean();
 
-    const questions = await Question.find({ createdBy: adminIdToUse }).lean();
-
-    if (!questions || questions.length === 0) {
+    if (questions.length === 0) {
       return res.status(404).json({ message: "No questions found for this admin" });
     }
 
@@ -138,12 +132,11 @@ export const getQuestions = async (
       count: questions.length,
       data: questions,
     });
-
   } catch (err) {
     console.error("Error fetching questions:", err);
     return res.status(500).json({
       success: false,
-      message: "Server error",
+      message: "Server error while fetching questions",
       error: err instanceof Error ? err.message : String(err),
     });
   }
