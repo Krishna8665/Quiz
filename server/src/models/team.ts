@@ -11,7 +11,7 @@ const TeamSchema: Schema<ITeam> = new Schema(
   {
     name: { type: String, required: true },
     points: { type: Number, default: 0 },
-    quizId: { type: Schema.Types.ObjectId, ref: "Quiz", required: true },
+    quizId: { type: Schema.Types.ObjectId, ref: "Quiz" },
     adminId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
