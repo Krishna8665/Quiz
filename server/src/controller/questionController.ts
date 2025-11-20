@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import Question from "../models/question";
 
 interface AuthenticatedRequest extends Request {
-  user?: { id: string; role?: string; email?: string };
+  user?: { id: string; role?: string; email?: string, createdBy?:string};
   file?: Express.Multer.File & {
     path?: string;
     filename?: string;
