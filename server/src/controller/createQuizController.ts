@@ -271,7 +271,7 @@ export const getQuizzesForUser = async (
         .populate("rounds")
         .populate("teams")
         .lean();
-    } else if (user.role === "quizMaster") {
+    } else if (user.role === "user") {
       // Only quizzes created by the admin who created this quiz master
       quizzes = await Quiz.find({ adminId: user.createdBy })
         .populate("rounds")
@@ -334,7 +334,7 @@ export const deleteQuiz = async (
   session.startTransaction();
 
   try {
-    const quizId = req.params.quizId; // Make sure route uses :quizId
+    const quizId = req.params.id; // Make sure route uses :quizId
     const adminId = req.user?.id;
 
     if (!adminId) {

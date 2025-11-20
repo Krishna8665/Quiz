@@ -47,7 +47,7 @@ router.post(
 
 router.get(
   "/get-questions",
-  authMiddleware(["admin"]),
+  authMiddleware(),
   async (req, res, next) => {
     try {
       const authReq = req as AuthenticatedRequest;
@@ -77,6 +77,7 @@ router.delete(
     }
   }
 );
+export default router;
 
 // router.patch(
 //   "/update/:id",
@@ -91,7 +92,6 @@ router.delete(
 //   async (req, res, next) => deleteQuestion
 // );
 
-export default router;
 // -----------------------------
 // Router
 // -----------------------------
