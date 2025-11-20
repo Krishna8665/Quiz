@@ -5,8 +5,8 @@ import { authMiddleware } from "../middleware/auth"; // Assuming you have auth m
 
 const router = Router();
 
-router.post("/start", authMiddleware, startQuiz);
+router.post("/start", authMiddleware(), startQuiz);
 
-router.post("/end", authMiddleware, endQuiz);
+router.post("/end", authMiddleware(), endQuiz);
 
 export default router;

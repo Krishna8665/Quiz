@@ -90,6 +90,7 @@ export const getQuizHistory = async (req: Request, res: Response) => {
     >();
 
     records.forEach((record) => {
+      if (!record.teamId || !record.roundId || !record.startedBy) return;
       const tId = record.teamId._id.toString();
 
       if (!teamStatsMap.has(tId)) {
@@ -108,7 +109,7 @@ export const getQuizHistory = async (req: Request, res: Response) => {
       const answers = record.answers || [];
       const roundData = record.roundId;
       const teamData = teamStatsMap.get(tId);
-      
+
       if (teamData && roundData) {
         teamData.rounds.push({
           roundId: roundData._id,
