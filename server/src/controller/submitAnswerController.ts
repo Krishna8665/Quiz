@@ -6,22 +6,19 @@ import Team from "../models/team";
 import Question from "../models/question";
 import QuizHistory from "../models/quizHistory";
 import Submit from "../models/submit";
+import Session from "../models/session";
 
 interface SubmitRequest extends Request {
-  user?: {
-    id: string;
-    name?: string;
-    email?: string;
-    role?: string;
-  };
+  user?: { id: string; name?: string; email?: string; role?: string };
   body: {
     quizId: string;
     roundId: string;
-    teamId?: string;
     questionId: string;
+    teamId?: string;
     givenAnswer?: string | number;
     isPassed?: boolean;
     answers?: { teamId: string; givenAnswer: number | string }[];
+    sessionId?: string;
   };
 }
 
@@ -35,15 +32,18 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
       givenAnswer,
       isPassed = false,
       answers,
+      sessionId,
     } = req.body;
     const user = req.user;
-
     if (!user) return res.status(401).json({ message: "Unauthorized" });
 
+    // Validate IDs
     if (!mongoose.Types.ObjectId.isValid(quizId))
       return res.status(400).json({ message: "Invalid quizId" });
     if (!mongoose.Types.ObjectId.isValid(roundId))
       return res.status(400).json({ message: "Invalid roundId" });
+    if (!mongoose.Types.ObjectId.isValid(questionId))
+      return res.status(400).json({ message: "Invalid questionId" });
 
     const quiz = await Quiz.findById(quizId).populate("teams");
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
@@ -55,10 +55,27 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
     if (!question)
       return res.status(404).json({ message: "Question not found" });
 
-    const rules = round.rules;
-    const roundNumber = round.roundNumber || 1;
+    // Find or create session
+    let session;
+    if (sessionId && mongoose.Types.ObjectId.isValid(sessionId)) {
+      session = await Session.findById(sessionId);
+    }
+    if (!session) {
+      session = await Session.create({
+        quizId,
+        startedBy: user.id,
+        status: "active",
+      });
+    }
 
-    // --- Handle Estimation Round ---
+    const roundNumber = round.roundNumber || 1;
+    const rules = round.rules;
+
+    const questionObjectId = question._id as mongoose.Types.ObjectId;
+
+    // -----------------------
+    // ESTIMATION ROUND LOGIC
+    // -----------------------
     if (round.category === "estimation round") {
       if (!answers || !Array.isArray(answers) || answers.length === 0)
         return res
@@ -68,38 +85,24 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
       const submittedTeams: { teamId: string; numericAnswer: number }[] = [];
 
       for (const ans of answers) {
-        const { teamId, givenAnswer } = ans;
-        if (!mongoose.Types.ObjectId.isValid(teamId)) continue;
-        const numericAnswer = Number(givenAnswer);
+        if (!mongoose.Types.ObjectId.isValid(ans.teamId)) continue;
+        const numericAnswer = Number(ans.givenAnswer);
         if (isNaN(numericAnswer)) continue;
-        submittedTeams.push({ teamId, numericAnswer });
+        submittedTeams.push({ teamId: ans.teamId, numericAnswer });
       }
 
-      if (submittedTeams.length === 0) {
+      if (submittedTeams.length === 0)
         return res
           .status(400)
           .json({ message: "No valid team submissions found" });
-      }
 
+      // Wait until all teams submit
       if (submittedTeams.length === quiz.teams.length) {
         const correctAnswerNum = Number(
           question.shortAnswer?.text ?? question.correctAnswer
         );
-        if (isNaN(correctAnswerNum))
-          return res.status(400).json({
-            message: "Estimation question must have numeric correct answer",
-          });
-
-        // Find closest team logic
-        const firstTeam = submittedTeams[0];
-        if (!firstTeam) {
-          return res
-            .status(400)
-            .json({ message: "No valid team submissions found" });
-        }
-        
-        let closestTeamId = firstTeam.teamId;
-        let closestAnswer = firstTeam.numericAnswer;
+        let closestTeamId = submittedTeams[0].teamId;
+        let closestAnswer = submittedTeams[0].numericAnswer;
         let minDiff = Math.abs(correctAnswerNum - closestAnswer);
 
         for (const t of submittedTeams) {
@@ -112,13 +115,12 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
         }
 
         const pointsToAward = Number(rules.points || 0);
-        const questionObjectId = question._id as mongoose.Types.ObjectId;
 
         for (const t of submittedTeams) {
           const isWinner = t.teamId === closestTeamId;
           const points = isWinner ? pointsToAward : 0;
 
-          // Update Submit
+          // Save Submit document
           const existingSubmit = await Submit.findOne({
             quizId,
             roundId,
@@ -133,7 +135,6 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
             existingSubmit.isCorrect = isWinner;
             await existingSubmit.save();
 
-            // Update team points
             const team = await Team.findById(t.teamId);
             if (team) {
               team.points = (team.points || 0) - oldPoints + points;
@@ -158,15 +159,20 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
             }
           }
 
-          // --- QuizHistory update ---
+          // Update QuizHistory under same session
           let history = await QuizHistory.findOne({
             quizId,
             roundId,
             teamId: t.teamId,
+            startedBy: user.id,
+            sessionId: session._id,
+            endedAt: { $exists: false },
           });
+
           const answerObj = {
             questionId: questionObjectId,
             givenAnswer: t.numericAnswer,
+            correctAnswer: correctAnswerNum,
             pointsEarned: points,
             isCorrect: isWinner,
             isPassed: false,
@@ -180,6 +186,7 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
               answers: [answerObj],
               totalPoints: points,
               startedBy: user.id,
+              sessionId: session._id,
               startedAt: new Date(),
             });
           } else {
@@ -194,17 +201,13 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
               (history.answers as any).push(answerObj);
               history.totalPoints += points;
             }
-            // Update startedBy if missing
-            if (!history.startedBy)
-              history.startedBy = new mongoose.Types.ObjectId(user.id);
-            if (!history.startedAt) history.startedAt = new Date();
-            history.endedAt = new Date(); // update endedAt
             await history.save();
           }
         }
 
         return res.status(200).json({
           message: "Estimation answers submitted and scored",
+          sessionId: session._id,
           correctAnswer: correctAnswerNum,
           winner: {
             teamId: closestTeamId,
@@ -216,29 +219,30 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
 
       return res.status(200).json({
         message: "Estimation answers submitted, waiting for remaining teams",
+        sessionId: session._id,
         teamsSubmitted: submittedTeams.length,
         totalTeams: quiz.teams.length,
       });
     }
 
-    // --- Handle Normal Rounds ---
+    // -----------------------
+    // NORMAL ROUND LOGIC
+    // -----------------------
     if (!teamId || givenAnswer === undefined)
       return res
         .status(400)
-        .json({ message: "teamId and givenAnswer required for normal rounds" });
-    if (!mongoose.Types.ObjectId.isValid(teamId))
-      return res.status(400).json({ message: "Invalid teamId" });
+        .json({ message: "teamId and givenAnswer required" });
 
     const team = await Team.findById(teamId);
     if (!team) return res.status(404).json({ message: "Team not found" });
 
-    const correctAnswerStr = question.correctAnswer?.toString();
-    const submittedAnswerStr = givenAnswer.toString();
+    const correctAnswerValue =
+      question.shortAnswer?.text ?? question.correctAnswer;
 
     let pointsEarned = 0;
     let isCorrect = false;
 
-    if (submittedAnswerStr === correctAnswerStr) {
+    if (givenAnswer.toString() === correctAnswerValue.toString()) {
       isCorrect = true;
       pointsEarned = isPassed
         ? Number(rules.passedPoints || 0)
@@ -253,16 +257,24 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
     team.points = (team.points || 0) + pointsEarned;
     await team.save();
 
-    const questionObjectId = question._id as mongoose.Types.ObjectId;
     const answerObj = {
       questionId: questionObjectId,
       givenAnswer,
+      correctAnswer: correctAnswerValue,
       pointsEarned,
       isCorrect,
       isPassed,
     };
 
-    let history = await QuizHistory.findOne({ quizId, roundId, teamId });
+    let history = await QuizHistory.findOne({
+      quizId,
+      roundId,
+      teamId,
+      startedBy: user.id,
+      sessionId: session._id,
+      endedAt: { $exists: false },
+    });
+
     if (!history) {
       history = await QuizHistory.create({
         quizId,
@@ -271,8 +283,8 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
         answers: [answerObj],
         totalPoints: pointsEarned,
         startedBy: user.id,
+        sessionId: session._id,
         startedAt: new Date(),
-        endedAt: new Date(),
       });
     } else {
       const idx = (history.answers as any[]).findIndex(
@@ -286,10 +298,6 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
         (history.answers as any).push(answerObj);
         history.totalPoints += pointsEarned;
       }
-      if (!history.startedBy)
-        history.startedBy = new mongoose.Types.ObjectId(user.id);
-      if (!history.startedAt) history.startedAt = new Date();
-      history.endedAt = new Date();
       await history.save();
     }
 
@@ -306,12 +314,13 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
 
     return res.status(200).json({
       message: "Answer submitted successfully",
+      sessionId: session._id,
       pointsEarned,
       isCorrect,
       teamPoints: team.points,
     });
   } catch (err: any) {
-    console.error("SubmitController Error:", err);
+    console.error("submitAnswer error:", err);
     return res
       .status(500)
       .json({ message: "Internal server error", error: err.message });

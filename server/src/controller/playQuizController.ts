@@ -1,62 +1,74 @@
-// controllers/quizController.ts
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import QuizHistory from "../models/quizHistory";
+import Session from "../models/session";
 
-interface StartQuizRequest extends Request {
-  body: {
-    quizId: string;
-    roundId: string;
-    teamId: string;
-  };
-  user?: {
-    id: string; // logged-in user
-  };
+interface AuthRequest extends Request {
+  user?: { id: string; role?: string; email?: string };
 }
 
-export const startQuiz = async (req: StartQuizRequest, res: Response) => {
+// -------------------------
+// START QUIZ
+// -------------------------
+
+export const startQuiz = async (req: AuthRequest, res: Response) => {
   try {
-    const { quizId, roundId, teamId } = req.body;
-    const startedBy = req.user?.id;
+    const { quizId } = req.body;
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    if (!mongoose.Types.ObjectId.isValid(quizId)) return res.status(400).json({ message: "Invalid quizId" });
-    if (!mongoose.Types.ObjectId.isValid(roundId)) return res.status(400).json({ message: "Invalid roundId" });
-    if (!mongoose.Types.ObjectId.isValid(teamId)) return res.status(400).json({ message: "Invalid teamId" });
-    if (!startedBy) return res.status(401).json({ message: "Unauthorized" });
+    if (!mongoose.Types.ObjectId.isValid(quizId))
+      return res.status(400).json({ message: "Invalid quizId" });
 
-    const history = await QuizHistory.create({
+    const session = await Session.create({
       quizId,
-      roundId,
-      teamId,
-      startedBy,
+      startedBy: userId,
+      status: "active",
       startedAt: new Date(),
-      answers: [],
-      totalPoints: 0,
     });
 
-    return res.status(200).json({ message: "Quiz started", historyId: history._id });
+    return res
+      .status(200)
+      .json({ message: "Session started", sessionId: session._id });
   } catch (err: any) {
-    console.error(err);
-    return res.status(500).json({ message: "Server error", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };
 
-export const endQuiz = async (req: Request, res: Response) => {
+// -------------------------
+// END QUIZ
+// -------------------------
+
+export const endQuiz = async (req: AuthRequest, res: Response) => {
   try {
-    const { historyId } = req.body;
+    const { sessionId } = req.body;
+    const userId = req.user?.id;
 
-    if (!mongoose.Types.ObjectId.isValid(historyId))
-      return res.status(400).json({ message: "Invalid history/session ID" });
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const history = await QuizHistory.findById(historyId);
-    if (!history) return res.status(404).json({ message: "History not found" });
+    if (!mongoose.Types.ObjectId.isValid(sessionId))
+      return res.status(400).json({ message: "Invalid sessionId" });
 
-    history.endedAt = new Date();
-    await history.save();
+    const session = await Session.findOne({
+      _id: sessionId,
+      startedBy: userId,
+      status: "active",
+    });
 
-    return res.status(200).json({ message: "Quiz ended", historyId });
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    session.status = "completed";
+    (session as any).endedAt = new Date();
+    await session.save();
+
+    return res
+      .status(200)
+      .json({ message: "Session ended successfully", sessionId: session._id });
   } catch (err: any) {
-    console.error(err);
-    return res.status(500).json({ message: "Internal server error", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: err.message });
   }
 };
