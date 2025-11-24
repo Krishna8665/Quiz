@@ -7,10 +7,8 @@ interface AuthRequest extends Request {
   user?: { id: string; role?: string; email?: string };
 }
 
-// -------------------------
-// START QUIZ
-// -------------------------
 
+// START QUIZ
 export const startQuiz = async (req: AuthRequest, res: Response) => {
   try {
     const { quizId } = req.body;
@@ -37,9 +35,8 @@ export const startQuiz = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// -------------------------
+
 // END QUIZ
-// -------------------------
 
 export const endQuiz = async (req: AuthRequest, res: Response) => {
   try {
