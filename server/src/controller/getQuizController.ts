@@ -41,7 +41,7 @@ interface SessionStats {
   };
 }
 
-// Define populated types
+// Populated types
 interface PopulatedTeam {
   _id: mongoose.Types.ObjectId;
   name: string;
@@ -73,7 +73,23 @@ export const getQuizHistory = async (req: Request, res: Response) => {
     if (!mongoose.Types.ObjectId.isValid(quizId))
       return res.status(400).json({ message: "Invalid quizId" });
 
-    // Populate all required references
+    // Fetch sessions for this quiz
+    const sessions = await Session.find({ quizId });
+
+    // Create session lookup
+    const sessionInfo: Record<
+      string,
+      { startedAt: Date; endedAt?: Date }
+    > = {};
+
+    sessions.forEach((s) => {
+      sessionInfo[s._id.toString()] = {
+        startedAt: s.createdAt,
+        endedAt: s.status === "completed" ? s.updatedAt : undefined,
+      };
+    });
+
+    // Fetch and populate quiz histories
     const histories = (await QuizHistory.find({ quizId })
       .populate("teamId")
       .populate("roundId")
@@ -83,6 +99,10 @@ export const getQuizHistory = async (req: Request, res: Response) => {
 
     histories.forEach((h) => {
       const sessionId = h.sessionId?.toString() || h._id.toString();
+
+      // Get session timestamps or fallback to quizHistory timestamps
+      const sessionData = sessionInfo[sessionId];
+
       if (!sessionMap[sessionId]) {
         sessionMap[sessionId] = {
           sessionId,
@@ -92,8 +112,8 @@ export const getQuizHistory = async (req: Request, res: Response) => {
             name: h.startedBy.name,
             email: h.startedBy.email,
           },
-          startedAt: h.startedAt,
-          endedAt: h.endedAt,
+          startedAt: sessionData?.startedAt || h.startedAt,
+          endedAt: sessionData?.endedAt || h.endedAt,
           teams: [],
           totals: {
             totalRounds: 0,
@@ -106,17 +126,14 @@ export const getQuizHistory = async (req: Request, res: Response) => {
         };
       }
 
+      // Team and Round Stats
       const teamId = h.teamId._id.toString();
       const teamName = h.teamId.name;
 
-      const roundId = h.roundId._id.toString();
-      const roundNumber = h.roundId.roundNumber;
-      const roundName = h.roundId.name;
-
       const roundStats: RoundStats = {
-        roundId,
-        roundNumber,
-        roundName,
+        roundId: h.roundId._id.toString(),
+        roundNumber: h.roundId.roundNumber,
+        roundName: h.roundId.name,
         attempted: h.answers?.length || 0,
         correct: h.answers?.filter((a) => a.isCorrect).length || 0,
         wrong: h.answers?.filter((a) => !a.isCorrect).length || 0,
@@ -125,23 +142,21 @@ export const getQuizHistory = async (req: Request, res: Response) => {
           h.answers?.reduce((sum, a) => sum + a.pointsEarned, 0) || 0,
       };
 
-      // Find team in session or create it
-      const existingTeamIndex = sessionMap[sessionId].teams.findIndex(
+      const existingTeam = sessionMap[sessionId].teams.find(
         (t) => t.teamId === teamId
       );
-      if (existingTeamIndex === -1) {
+
+      if (!existingTeam) {
         sessionMap[sessionId].teams.push({
           teamId,
           teamName,
           roundWiseStats: [roundStats],
         });
       } else {
-        sessionMap[sessionId].teams[existingTeamIndex].roundWiseStats.push(
-          roundStats
-        );
+        existingTeam.roundWiseStats.push(roundStats);
       }
 
-      // Update session totals
+      // Totals
       const totals = sessionMap[sessionId].totals;
       totals.totalRounds += 1;
       totals.totalAttempted += roundStats.attempted;
