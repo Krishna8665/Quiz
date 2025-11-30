@@ -11,7 +11,7 @@ interface AuthRequest extends Request {
   };
 }
 
-/*  ADD TEAM */
+//ADD TEAM 
 export const addTeam = async (req: AuthRequest, res: Response) => {
   try {
     const adminId = req.user?.id;
@@ -55,7 +55,7 @@ export const addTeam = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/* GET ALL TEAMS FOR LOGGED-IN ADMIN*/
+// GET ALL TEAMS FOR LOGGED-IN ADMIN
 export const getTeams = async (req: AuthRequest, res: Response) => {
   try {
     const adminId = req.user?.id;
@@ -78,7 +78,7 @@ export const getTeams = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/* GET TEAMS BY QUIZ ID */
+// GET TEAMS BY QUIZ ID 
 export const getTeamsByQuiz = async (req: Request, res: Response) => {
   try {
     const { quizId } = req.params;
@@ -102,7 +102,7 @@ export const getTeamsByQuiz = async (req: Request, res: Response) => {
   }
 };
 
-/*  DELETE TEAM */
+// DELETE TEAM 
 export const deleteTeam = async (req: AuthRequest, res: Response) => {
   try {
     const adminId = req.user?.id;
