@@ -75,8 +75,6 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
 
     // ESTIMATION ROUND LOGIC
 
-    // ----- ESTIMATION ROUND SUBMIT -----
-
     if (round.category === "estimation round") {
       if (!answers || !Array.isArray(answers) || answers.length === 0) {
         return res.status(400).json({
@@ -84,7 +82,7 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
         });
       }
 
-      // STEP 1: Collect valid submissions
+      //  Collect valid submissions
       const submittedTeams: { teamId: string; numericAnswer: number }[] = [];
 
       for (const ans of answers) {
@@ -102,7 +100,7 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
         });
       }
 
-      // STEP 2: Wait until all teams submit
+      //  Wait until all teams submit
       if (submittedTeams.length !== quiz.teams.length) {
         return res.status(200).json({
           message: "Estimation answers submitted, waiting for remaining teams",
@@ -112,7 +110,7 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
         });
       }
 
-      // STEP 3: Determine winners (ties allowed)
+      //  Determine winners (ties allowed)
       const correctAnswerNum = Number(
         question.shortAnswer?.text ?? question.correctAnswer
       );
@@ -167,22 +165,18 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
             });
           }
 
-          // ---- B) Update Team Points ----
+          // Update Team Points
           const team = await Team.findById(t.teamId);
 
           if (team) {
-            console.log("Team BEFORE:", team.points);
-
             if (isWinner) {
               team.points = (team.points || 0) + pointsToAward;
             }
 
             await team.save();
-
-            console.log("Team AFTER:", team.points);
           }
 
-          // ---- C) Update QuizHistory ----
+          // Update QuizHistory
           const answerObj = {
             questionId: questionObjectId,
             givenAnswer: t.numericAnswer,
@@ -232,7 +226,7 @@ export const submitAnswer = async (req: SubmitRequest, res: Response) => {
         })
       );
 
-      // STEP 5: Return winners
+      //  Return winners
       return res.status(200).json({
         message: "Estimation answers submitted and scored",
         sessionId: session._id,
