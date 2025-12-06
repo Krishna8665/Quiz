@@ -16,9 +16,9 @@ import {
 
 const router = Router();
 
-router.post("/create-rounds", authMiddleware(["admin"]), createRound); // add team
-router.get("/get-rounds", authMiddleware(["admin"]), getRounds); // add team
-router.get("/get-roundById", authMiddleware(["admin"]), getRoundById); // add team
-router.delete("/del-rounds/:id", authMiddleware(["admin"]), deleteRound); // add team
+router.post("/create-rounds", authMiddleware(["admin"]), createRound); 
+router.get("/get-rounds", authMiddleware(["admin"]), getRounds); 
+router.get("/get-roundById", authMiddleware(["admin"]), getRoundById); 
+router.delete("/del-rounds/:id", authMiddleware(["admin"]), deleteRound);
 
 export default router;
